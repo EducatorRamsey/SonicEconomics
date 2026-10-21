@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { levels } from "../src/course";
 for (const fallback of [false, true]) {
   test(`fullscreen ${fallback ? "page fallback" : "browser mode"} keeps controls, questions, and exit usable`, async ({
     page,
@@ -42,14 +43,17 @@ for (const fallback of [false, true]) {
     await expect(page.locator("#setting-speed")).toBeVisible();
     await page.locator("#settings-done").click();
     await page.locator("#resume").click();
-    await page.evaluate(() => (window as any).rr.teleport(1200));
+    await page.evaluate((x) => (window as any).rr.teleport(x), levels[0].shop);
     await page.locator("#shop-open").click();
     await expect(page.locator("#store-controls")).toBeVisible();
     await page.locator("#store-browse").click();
     await expect(page.locator("#buy-shield")).toBeVisible();
     await page.locator("#leave-shop").click();
     await page.locator("#store-exit").click();
-    await page.evaluate(() => (window as any).rr.teleport(7300));
+    await page.evaluate(
+      (x) => (window as any).rr.teleport(x),
+      levels[0].end + 100,
+    );
 
     await expect(page.locator("#dialog-title")).toHaveText(
       "A little water, many gardens",

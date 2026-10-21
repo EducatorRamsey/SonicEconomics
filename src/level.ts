@@ -10,27 +10,12 @@ import {
   levels,
   movingGaps,
   obstacles,
+  coinPositions,
+  ledgesFor,
 } from "./course";
 export { WORLD_WIDTH, FINISH_X, SHOP_X, checkpoints } from "./course";
 export const hazardPositions = obstacles.map((o) => o.x);
-export const tokenPositions = [
-  ...Array.from({ length: 6 }, (_, i) => ({ x: 380 + i * 90, y: 442 })),
-  ...Array.from({ length: 175 }, (_, i) => ({
-    x: SHOP_X + 200 + i * 122,
-    y: i % 13 === 4 ? 365 : 442,
-  })),
-  ...loopTracks
-    .filter((t) => t.x > SHOP_X)
-    .flatMap((t) =>
-      Array.from({ length: 9 }, (_, i) => {
-        const a = ((i + 1) * Math.PI * 2) / 10;
-        return {
-          x: t.x + Math.sin(a) * t.radius,
-          y: t.y + Math.cos(a) * t.radius,
-        };
-      }),
-    ),
-];
+export const tokenPositions = coinPositions;
 export function drawLevel(scene: Phaser.Scene, relaxed = true) {
   const level = levels[progress.level],
     stage = level.id;
@@ -215,22 +200,7 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
     g.fillRect(3480, 485, 210, 14);
     floor(3480, 210);
   }
-  const ledges =
-    stage === 0
-      ? [
-          { x: 700, y: 407, w: 190 },
-          { x: 3210, y: 410, w: 200 },
-        ]
-      : stage === 1
-        ? [
-            { x: 8600, y: 447, w: 190 },
-            { x: 8770, y: 399, w: 210 },
-            { x: 8950, y: 353, w: 230 },
-          ]
-        : [
-            { x: 16300, y: 370, w: 160 },
-            { x: 18800, y: 330, w: 210 },
-          ];
+  const ledges = ledgesFor(stage);
   for (const p of ledges) {
     g.fillStyle(stage === 0 ? 0xb47955 : stage === 1 ? 0x47647a : 0x6c849f);
     g.fillRoundedRect(p.x, p.y, p.w, 19, 6);
@@ -258,8 +228,16 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
         ? "AUSTIN · Jump construction steps"
         : "ALBUQUERQUE · Move & jump",
   );
-  sign(level.shop - 240, "STORE AHEAD · Enter with E");
+  sign(level.shop - 500, "STORE AHEAD · Enter with E");
   sign(level.safe, "SAFE CHECKPOINT");
+  sign(
+    left + 10200,
+    stage === 2
+      ? "HIGH SHELVES · Jets help; lower steps also work"
+      : stage === 1
+        ? "HIGH ROUTE · Speed or magnet can help"
+        : "HIGH ROUTE · Spring step or climb the lower step",
+  );
   for (const loop of loopTracks.filter(
     (t) => t.x > left && t.x < level.right,
   )) {

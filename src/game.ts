@@ -70,11 +70,7 @@ export class Desert extends Phaser.Scene {
         p.x < level.right &&
         !progress.collected.includes(i)
       ) {
-        const t = this.tokens.create(
-          p.x,
-          p.y,
-          ["token", "chip", "crystal"][progress.level],
-        );
+        const t = this.tokens.create(p.x, p.y, "token");
         t.setData("id", i);
       }
     });
@@ -202,6 +198,9 @@ export class Desert extends Phaser.Scene {
     )
       return;
     progress.level++;
+    progress.boost = 0;
+    progress.magnet = 0;
+    progress.boots = 0;
     progress.pendingGate = null;
     progress.x = levels[progress.level].start;
     progress.hearts = 3;
@@ -238,9 +237,6 @@ export class Desert extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     this.runTime += dt * 1000;
     progress.elapsed += dt;
-    progress.boost = Math.max(0, progress.boost - dt);
-    progress.magnet = Math.max(0, progress.magnet - dt);
-    progress.boots = Math.max(0, progress.boots - dt);
     if (progress.magnet > 0)
       for (const obj of this.tokens.getChildren().slice()) {
         const token = obj as Phaser.Physics.Arcade.Sprite;
@@ -250,7 +246,7 @@ export class Desert extends Phaser.Scene {
             this.player.y,
             token.x,
             token.y,
-          ) < 150
+          ) < 240
         )
           this.collect(token);
       }

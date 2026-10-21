@@ -1,41 +1,41 @@
-/** Campaign geometry shared by scenery, game rules, menus, and tests. */
-export const WORLD_WIDTH = 23200;
+/** Each destination now has three times its original playable distance. */
+export const WORLD_WIDTH = 66200;
 export const levels = [
   {
     id: 0,
     name: "Albuquerque",
     start: 180,
     left: 0,
-    end: 7200,
-    right: 7600,
-    shop: 1200,
-    safe: 3900,
+    end: 21240,
+    right: 22000,
+    shop: 8200,
+    safe: 13000,
     description:
-      "Run beneath the Sandia Mountains, cross the Rio Grande, and loop through Albuquerque.",
+      "A longer Sandia foothills trail: learn the tumbleweeds, visit the river store, then choose high ledges or the hazard-filled ground route.",
   },
   {
     id: 1,
     name: "Austin, Texas",
-    start: 7980,
-    left: 7800,
-    end: 14800,
-    right: 15200,
-    shop: 8200,
-    safe: 11600,
+    start: 23180,
+    left: 23000,
+    end: 43640,
+    right: 44400,
+    shop: 31200,
+    safe: 36000,
     description:
-      "Road trip to Austin! Jump construction barriers, race through the skyline, and reach the fictional Austin Launch Works.",
+      "Cross construction steps and moving barriers before shopping. Explore elevated city routes on the way to the fictional Austin Launch Works.",
   },
   {
     id: 2,
     name: "The Moon",
-    start: 15780,
-    left: 15600,
-    end: 22400,
-    right: 23200,
-    shop: 16000,
-    safe: 20500,
+    start: 45580,
+    left: 45400,
+    end: 65440,
+    right: 66200,
+    shop: 53600,
+    safe: 58400,
     description:
-      "Touch down on the Moon! Float through low gravity, dodge timed energy gates and rolling meteorites, and cross lunar platforms. Relaxed mode adds safety paths.",
+      "A long low-gravity expedition: timed energy gates, meteorites, high lunar shelves and four moving-platform crossings.",
   },
 ];
 export const FINISH_X = levels[2].end;
@@ -44,23 +44,82 @@ export const checkpoints = levels.map((l) => ({
   x: l.end,
   label: `Level ${l.id + 1} · Economics checkpoint`,
 }));
-export const loopTracks = [2200, 4800, 10000, 12500, 17500, 20000].map((x) => ({
-  x,
-  y: 315,
-  radius: 150,
+export const loopTracks = levels.flatMap((l) =>
+  [2200, 4800, 9000, 12600, 15900, 19000].map((x) => ({
+    x: l.left + x,
+    y: 315,
+    radius: 150,
+  })),
+);
+export const movingGaps = [10500, 13700, 17400, 19600].map((x, i) => ({
+  left: levels[2].left + x,
+  right: levels[2].left + x + 160 + i * 10,
 }));
-export const movingGaps = [
-  { left: 20750, right: 20910 },
-  { left: 21900, right: 22080 },
+export const obstacles: {
+  level: number;
+  x: number;
+  kind: "tumbleweed" | "boulder" | "wind";
+}[] = [
+  ...[3300, 6100, 10500, 11050, 14650, 17000, 18200, 20400].map((x) => ({
+    level: 0,
+    x,
+    kind: "tumbleweed" as const,
+  })),
+  ...[1700, 3500, 6000, 10300, 11050, 14650, 17300, 19800].map((x) => ({
+    level: 1,
+    x: levels[1].left + x,
+    kind: "boulder" as const,
+  })),
+  ...[1050, 2900, 6500, 11100, 14800, 18000].map((x) => ({
+    level: 2,
+    x: levels[2].left + x,
+    kind: "wind" as const,
+  })),
+  ...[7500, 11900, 16800].map((x) => ({
+    level: 2,
+    x: levels[2].left + x,
+    kind: "boulder" as const,
+  })),
 ];
-export const obstacles = [
-  { level: 0, x: 3300, kind: "tumbleweed" },
-  { level: 0, x: 5900, kind: "tumbleweed" },
-  { level: 1, x: 9500, kind: "boulder" },
-  { level: 1, x: 11300, kind: "boulder" },
-  { level: 1, x: 13700, kind: "boulder" },
-  { level: 2, x: 16650, kind: "wind" },
-  { level: 2, x: 18500, kind: "wind" },
-  { level: 2, x: 21300, kind: "wind" },
-  { level: 2, x: 19800, kind: "boulder" },
-] as const;
+/** A finite budget: 12 introductory ground coins and 4 optional route coins per stage. */
+export const coinPositions = levels.flatMap((level) => [
+  ...[380, 470, 560, 650, 740, 830, 1400, 2500, 3500, 4500, 5800, 7100].map(
+    (x) => ({ x: level.left + x, y: 442 }),
+  ),
+  ...[11000, 11100, 14600, 14700].map((x) => ({
+    x: level.left + x,
+    y: level.id === 2 ? 265 : 325,
+  })),
+]);
+export const ledgesFor = (id: number) => {
+  const left = levels[id].left;
+  const intro =
+    id === 0
+      ? [
+          { x: 700, y: 407, w: 190 },
+          { x: 3210, y: 410, w: 200 },
+        ]
+      : id === 1
+        ? [
+            { x: 800, y: 447, w: 190 },
+            { x: 970, y: 399, w: 210 },
+            { x: 1150, y: 353, w: 230 },
+          ]
+        : [
+            { x: 700, y: 370, w: 160 },
+            { x: 3200, y: 330, w: 210 },
+          ];
+  const routes = [10750, 14350].flatMap((x) => [
+    { x: x - 350, y: id === 2 ? 380 : 425, w: 150 },
+    { x, y: id === 2 ? 300 : 360, w: 500 },
+  ]);
+  const extra =
+    id === 1
+      ? [
+          { x: 16500, y: 447, w: 190 },
+          { x: 16670, y: 399, w: 210 },
+          { x: 16850, y: 353, w: 230 },
+        ]
+      : [];
+  return [...intro, ...routes, ...extra].map((p) => ({ ...p, x: left + p.x }));
+};

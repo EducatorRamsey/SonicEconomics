@@ -1,5 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { levels, loopTracks, movingGaps } from "../src/course";
+import {
+  levels,
+  loopTracks,
+  movingGaps,
+  obstacles,
+  coinPositions,
+  ledgesFor,
+} from "../src/course";
 import {
   start,
   state,
@@ -47,13 +54,14 @@ test("movement, jumping, platforms, collection, pause, and touch controls", asyn
   await page.mouse.up();
 });
 
-test("enter the store, walk to its counter, spend limited tokens, exit, and use both upgrades", async ({
+test("enter the later store, choose a shield over spring step, and keep the choice after reload", async ({
   page,
 }) => {
   await start(page);
-  for (const x of [380, 470, 560, 650, 740, 830]) await teleport(page, x);
-  expect((await state(page)).tokens).toBe(6);
+  for (const coin of coinPositions.slice(0, 12)) await teleport(page, coin.x);
+  expect((await state(page)).tokens).toBe(12);
   await enterStore(page);
+  const storeBalance = (await state(page)).tokens;
   const time = (await state(page)).elapsed;
   const firstX = await page.evaluate(() => (window as any).rr.store.player.x);
   await page.keyboard.down("ArrowRight");
@@ -67,8 +75,8 @@ test("enter the store, walk to its counter, spend limited tokens, exit, and use 
   await expect(page.locator("#buy-shield")).toBeVisible();
   expect((await state(page)).elapsed).toBe(time);
   await page.locator("#buy-shield").click();
-  expect((await state(page)).shield).toBe(1);
-  expect((await state(page)).tokens).toBe(0);
+  expect((await state(page)).shield).toBe(3);
+  expect((await state(page)).tokens).toBe(storeBalance - 10);
   await expect(page.locator("#buy-boost")).toBeDisabled();
   await page.locator("#leave-shop").click();
   await expect(page.locator("#store-controls")).toBeVisible();
@@ -92,29 +100,12 @@ test("enter the store, walk to its counter, spend limited tokens, exit, and use 
   await expect(page.locator("#store-controls")).toBeVisible();
   await page.locator("#store-exit").click();
   expect((await state(page)).screen).toBe("play");
-  for (const x of [1400, 1522, 1644, 1766]) await teleport(page, x);
-  await enterStore(page);
-  await page.locator("#store-browse").click();
-  await page.locator("#buy-boost").click();
-  expect((await state(page)).boost).toBe(25);
-  await page.waitForTimeout(250);
-  expect((await state(page)).boost).toBe(25);
-  await page.locator("#leave-shop").click();
-  await page.locator("#store-exit").click();
-  await expect.poll(async () => (await state(page)).ground).toBe(true);
-  const y = (await state(page)).y;
-  await page.keyboard.down("Space");
-  await page.waitForFunction(
-    (y) => (window as any).rr.scene.player.y < y - 112,
-    y,
-  );
-  await page.keyboard.up("Space");
-  await teleport(page, 5900);
-  await expect.poll(async () => (await state(page)).shield).toBe(0);
+  await teleport(page, 10500);
+  await expect.poll(async () => (await state(page)).shield).toBe(2);
   expect((await state(page)).hearts).toBe(3);
   await page.reload();
   await page.locator("#continue-save").click();
-  expect((await state(page)).purchases).toEqual(["shield", "boost"]);
+  expect((await state(page)).purchases).toEqual(["shield"]);
 });
 
 test("mandatory level-end questions gate progress, freeze simulation, support retries and narration, and never duplicate rewards", async ({
@@ -216,7 +207,10 @@ test("save at a pending gate, reload an answered gate, recover hearts, and prese
   await expect.poll(async () => (await state(page)).active).toBe(true);
   await teleport(page, levels[1].safe + 10);
   await page.evaluate(() => ((window as any).rr.progress.shield = 0));
-  await teleport(page, 13700);
+  await teleport(
+    page,
+    obstacles.find((o) => o.level === 1 && o.x > levels[1].safe)!.x,
+  );
   await expect.poll(async () => (await state(page)).hearts).toBe(2);
   await page.waitForTimeout(200);
   expect((await state(page)).hearts).toBe(2);
@@ -229,7 +223,7 @@ test("save at a pending gate, reload an answered gate, recover hearts, and prese
   });
   expect((await state(page)).hearts).toBe(3);
   expect((await state(page)).x).toBeCloseTo(levels[1].safe, 0);
-  await teleport(page, 12000, 690);
+  await teleport(page, levels[1].safe + 500, 690);
   await expect
     .poll(async () => Math.abs((await state(page)).x - levels[1].safe))
     .toBeLessThan(5);
@@ -257,7 +251,7 @@ test("save at a pending gate, reload an answered gate, recover hearts, and prese
 test("complete all three levels with ordinary gentle-speed movement, different hazards, and one mandatory question each", async ({
   page,
 }) => {
-  test.setTimeout(200000);
+  test.setTimeout(420000);
   await start(page);
   await page.evaluate(() => ((window as any).rr.settings.speed = 0.7));
   for (let id = 0; id < 3; id++) {
@@ -268,12 +262,18 @@ test("complete all three levels with ordinary gentle-speed movement, different h
     );
     expect(kinds).toContain(["tumbleweed", "boulder", "wind"][id]);
     await page.keyboard.down("ArrowRight");
-    const deadline = Date.now() + 70000;
+    const deadline = Date.now() + 130000;
     while ((await state(page)).screen === "play" && Date.now() < deadline) {
       const current = await state(page);
       // Use ordinary jumps on level-two stairs and level-three moving bridges.
       const jumpSection =
-        (id === 1 && current.x > 8380 && current.x < 9300) ||
+        obstacles.some(
+          (o) =>
+            o.level === id && current.x > o.x - 270 && current.x < o.x + 100,
+        ) ||
+        ledgesFor(id).some(
+          (p) => current.x > p.x - 240 && current.x < p.x + p.w && p.y >= 350,
+        ) ||
         (id === 2 &&
           movingGaps.some(
             (gap) => current.x > gap.left - 300 && current.x < gap.right + 220,
@@ -297,7 +297,7 @@ test("complete all three levels with ordinary gentle-speed movement, different h
     expect((await state(page)).level).toBe(id);
     expect(
       await page.evaluate(() => (window as any).rr.scene.loops.completed.size),
-    ).toBe(2);
+    ).toBe(6);
     await answer(page, id);
   }
   expect((await state(page)).finished).toBe(true);
@@ -318,7 +318,10 @@ test("lunar energy warnings change collision danger, moving bridges carry the pl
   await expect.poll(async () => (await state(page)).level).toBe(2);
   await expect.poll(async () => (await state(page)).active).toBe(true);
   await page.evaluate(() => ((window as any).rr.scene.runTime = 3100));
-  await teleport(page, 16650);
+  await teleport(
+    page,
+    obstacles.find((o) => o.level === 2 && o.kind === "wind")!.x,
+  );
   const before = await state(page);
   await page.waitForTimeout(200);
   expect((await state(page)).shield).toBe(before.shield);
@@ -451,7 +454,7 @@ test("loop comfort setting preserves a continuous ground route and keyboard menu
   );
 });
 
-test("old trail saves keep earned currency, upgrades, and accessibility settings while starting the new campaign", async ({
+test("old wallets are backed up while the longer balanced campaign starts fresh with comfort settings", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -481,8 +484,13 @@ test("old trail saves keep earned currency, upgrades, and accessibility settings
   await expect.poll(async () => (await state(page)).active).toBe(true);
   const s = await state(page);
   expect(s.level).toBe(0);
-  expect(s.tokens).toBe(17);
-  expect(s.shield).toBe(2);
+  expect(s.tokens).toBe(0);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("rr-previous-campaign")!).tokens,
+    ),
+  ).toBe(17);
+  expect(s.shield).toBe(0);
   expect(s.answered).toEqual([]);
   expect(s.completedLevels).toEqual([]);
   expect(s.finished).toBe(false);

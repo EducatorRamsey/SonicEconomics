@@ -10,33 +10,35 @@ export const inventories = [
       id: "shield",
       name: "Trail shield",
       icon: "◌",
-      price: 6,
-      description: "Protects one heart from a hazard. Stays until used.",
+      price: 10,
+      description:
+        "Absorbs three hazard hits. Useful on the longer ground route; unused shields carry onward.",
     },
     {
       id: "boost",
       name: "Spring step",
       icon: "↑",
-      price: 4,
-      description: "Higher jumps for 25 seconds of outdoor play.",
+      price: 9,
+      description:
+        "Higher jumps for the rest of this stage. Reach the high route directly instead of climbing the lower steps.",
     },
   ],
   [
     {
       id: "magnet",
-      name: "Chip magnet",
+      name: "Coin magnet",
       icon: "⌁",
-      price: 8,
+      price: 13,
       description:
-        "Collects currency within 150 pixels for 40 seconds of outdoor play.",
+        "Collects coins within 240 pixels for the rest of this stage. Reach elevated coins from the safe ground route.",
     },
     {
       id: "boots",
       name: "Speed boots",
       icon: "»",
-      price: 10,
+      price: 14,
       description:
-        "Run 25% faster for 35 seconds of outdoor play. Loops keep their safe speed.",
+        "Run 25% faster for the rest of this stage. Clear elevated route gaps more easily; assisted loops keep their safe speed.",
     },
   ],
   [
@@ -44,30 +46,31 @@ export const inventories = [
       id: "armor",
       name: "Meteor armor",
       icon: "◇",
-      price: 12,
+      price: 18,
       description:
-        "Adds three shields against meteorites and energy gates. Stays until used.",
+        "Adds five shields against meteorites and energy gates. Stays until used.",
     },
     {
       id: "jets",
       name: "Lunar jump jets",
       icon: "⇧",
-      price: 9,
+      price: 17,
       description:
-        "Three midair boosts. Release Jump, then press it again in the air to use one.",
+        "Eight midair boosts. Release Jump, then press it again in the air to use one.",
     },
   ],
 ];
 export function purchase(id: string): boolean {
   const item = inventories[progress.level].find((item) => item.id === id);
-  if (!item || progress.tokens < item.price) return false;
+  if (!item || progress.tokens < item.price || progress.purchases.includes(id))
+    return false;
   progress.tokens -= item.price;
-  if (id === "shield") progress.shield++;
-  if (id === "boost") progress.boost = 25;
-  if (id === "magnet") progress.magnet = 40;
-  if (id === "boots") progress.boots = 35;
-  if (id === "armor") progress.shield += 3;
-  if (id === "jets") progress.jets += 3;
+  if (id === "shield") progress.shield += 3;
+  if (id === "boost") progress.boost = 1;
+  if (id === "magnet") progress.magnet = 1;
+  if (id === "boots") progress.boots = 1;
+  if (id === "armor") progress.shield += 5;
+  if (id === "jets") progress.jets += 8;
   progress.purchases.push(id);
   return true;
 }

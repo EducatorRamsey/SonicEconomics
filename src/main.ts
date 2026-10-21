@@ -22,7 +22,7 @@ app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-lab
 <main><div class="page-intro"><div><span class="eyebrow">FROM THE SOUTHWEST TO SPACE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
 <section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> ROAD TO THE MOON <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling Earth-to-Moon platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Enter store · E</button><div id="store-controls" role="region" aria-label="Store controls" hidden><span>SUNSTONE SUPPLY · Walk with ← → · E at the counter or door</span><button id="store-browse" class="secondary">Browse upgrades</button><button id="store-exit" class="primary">Leave store</button></div><div id="overlay"></div></div>
 <div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
-<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. One economics checkpoint at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Moonbound v4 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
+<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. One economics checkpoint at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Moonbound v5 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const scene = new Desert();
@@ -48,7 +48,7 @@ function hud() {
     "♥ ".repeat(progress.hearts) + "♡ ".repeat(3 - progress.hearts);
   $("hearts").setAttribute("aria-label", `${progress.hearts} hearts`);
   $("power").textContent =
-    `${progress.shield ? `◌ Shield ×${progress.shield} ` : ""}${progress.boost > 0 ? `↑ ${Math.ceil(progress.boost)}s ` : ""}${progress.magnet > 0 ? `⌁ ${Math.ceil(progress.magnet)}s ` : ""}${progress.boots > 0 ? `» ${Math.ceil(progress.boots)}s ` : ""}${progress.jets ? `⇧ Jets ×${progress.jets}` : ""}`;
+    `${progress.shield ? `◌ Shield ×${progress.shield} ` : ""}${progress.boost > 0 ? "↑ Spring " : ""}${progress.magnet > 0 ? "⌁ Magnet " : ""}${progress.boots > 0 ? "» Speed " : ""}${progress.jets ? `⇧ Jets ×${progress.jets}` : ""}`;
   $("timer").hidden = settings.mode !== "challenge";
   $("timer").textContent =
     `${Math.floor(progress.elapsed / 60)}:${String(Math.floor(progress.elapsed % 60)).padStart(2, "0")}`;
@@ -149,7 +149,7 @@ function button(id: string, fn: () => void) {
 function title() {
   modal(
     "title",
-    `<div class="eyebrow">ALBUQUERQUE → AUSTIN → THE MOON</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Run Albuquerque, visit Austin’s launch site, then ride a rocket to the Moon. Each destination has its own store and one question at the finish.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
+    `<div class="eyebrow">ALBUQUERQUE → AUSTIN → THE MOON</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Three longer worlds, six loops per stage, and only 16 coins per destination. Buy equipment now or save for the next shop.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
   );
   button("start", () => {
     if (hasSave()) confirmNew();
@@ -173,7 +173,7 @@ function begin() {
   scene.reset();
   play();
   notice(
-    "Level 1 · Albuquerque. Practice, enter the store with E, then run the loops. One question waits at the finish.",
+    "Level 1 · Albuquerque. Try the loops and tumbleweeds before the store. Just 16 coins: choose equipment or save. One question waits at the finish.",
   );
 }
 function confirmNew() {
@@ -361,7 +361,7 @@ function rocketFlight() {
     scene.advanceLevel();
     play();
     notice(
-      "Welcome to the Moon! Lower gravity makes jumps last longer. Crystals spend like tokens; energy gates replace wind.",
+      "Welcome to the Moon! Lower gravity makes jumps last longer. The same gold coins work everywhere; watch for timed energy gates.",
     );
   };
   button("land-now", land);
@@ -373,13 +373,16 @@ function browseStore() {
   const stock = inventories[progress.level];
   modal(
     "shop",
-    `<span class="eyebrow">${stores[progress.level].toUpperCase()}</span><h2 id="dialog-title">A choice for this world.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Coins, chips, and crystals all count toward this balance. No upgrade is needed to finish.</p><div class="shop-cards">${stock.map((item) => `<article><span class="upgrade-icon">${item.icon}</span><h3>${item.name}</h3><p>${item.description}</p><button id="buy-${item.id}" class="secondary">Buy ${item.name} · ${item.price} tokens</button></article>`).join("")}</div><p id="shop-feedback" role="status">New destination, different equipment. Timed upgrades pause in stores and menus.</p><button id="leave-shop" class="primary">Back to the store</button>`,
+    `<span class="eyebrow">${stores[progress.level].toUpperCase()}</span><h2 id="dialog-title">A choice for this world.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Each stage has just 16 coins, including 4 on higher routes. Prices mean choosing equipment now or saving for later. Each item has one in stock.</p><div class="shop-cards">${stock.map((item) => `<article><span class="upgrade-icon">${item.icon}</span><h3>${item.name}</h3><p>${item.description}</p><button id="buy-${item.id}" class="secondary">Buy ${item.name} · ${item.price} tokens</button></article>`).join("")}</div><p id="shop-feedback" role="status">Stage equipment lasts until the next destination. Shields and unused jet fuel stay until used.</p><button id="leave-shop" class="primary">Back to the store</button>`,
     true,
   );
   const refresh = () => {
     for (const item of stock)
       ($("buy-" + item.id) as HTMLButtonElement).disabled =
-        progress.tokens < item.price;
+        progress.tokens < item.price || progress.purchases.includes(item.id);
+    for (const item of stock)
+      if (progress.purchases.includes(item.id))
+        $("buy-" + item.id).textContent = `${item.name} · Sold out`;
     $("shop-balance").textContent = String(progress.tokens);
   };
   for (const item of stock)

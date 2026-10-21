@@ -44,7 +44,7 @@ export const defaults: Settings = {
   jump: "SPACE",
 };
 const fresh = (): Progress => ({
-  campaign: 4,
+  campaign: 5,
   level: 0,
   completedLevels: [],
   pendingGate: null,
@@ -85,16 +85,13 @@ export let progress: Progress =
   Array.isArray(raw.collected)
     ? { ...fresh(), ...raw }
     : fresh();
-// Restart older routes with the new destinations, retaining earned supplies.
-if (raw && raw.campaign !== 4) {
-  progress = {
-    ...fresh(),
-    tokens: progress.tokens,
-    hearts: progress.hearts,
-    shield: progress.shield,
-    boost: progress.boost,
-    purchases: progress.purchases,
-  };
+// Old wallets would bypass the new scarcity balance. Keep a local backup and
+// start the longer campaign fresh; comfort settings are independent.
+if (raw && raw.campaign !== 5) {
+  try {
+    localStorage.setItem("rr-previous-campaign", JSON.stringify(raw));
+  } catch {}
+  progress = fresh();
 }
 progress.level = Math.min(2, Math.max(0, Math.floor(progress.level)));
 progress.x = Math.min(
