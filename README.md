@@ -76,7 +76,7 @@ Commit and push `index.html` along with the source changes. The generated single
 3. In **Actions**, select **Publish Roadrunner Rush**, then **Run workflow** on your chosen branch.
 4. When it finishes, open the Pages address shown by the deployment.
 
-The included workflow only publishes when manually run. Vite's relative base supports a project site under `/SonicEconomics/`. No keys or database are needed. The `dist` folder can also be hosted on any static web host; do not open `index.html` directly from the filesystem.
+The included workflow publishes on pushes to `main` once Pages Source is set to GitHub Actions; it can also be run manually. Vite's relative base supports a project site under `/SonicEconomics/`. No keys or database are needed. The `dist` folder can also be hosted on any static web host; do not open `index.html` directly from the filesystem.
 
 ## Source map and original assets
 
