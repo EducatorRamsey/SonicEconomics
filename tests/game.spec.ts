@@ -304,7 +304,7 @@ test("complete all three levels with ordinary gentle-speed movement, different h
   expect((await state(page)).completedLevels).toEqual([0, 1, 2]);
 });
 
-test("wind warnings change collision danger, moving bridges carry the player, and challenge gaps can be jumped", async ({
+test("lunar energy warnings change collision danger, moving bridges carry the player, and challenge gaps can be jumped", async ({
   page,
 }) => {
   await start(page);

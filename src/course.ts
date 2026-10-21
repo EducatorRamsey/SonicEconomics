@@ -3,7 +3,7 @@ export const WORLD_WIDTH = 23200;
 export const levels = [
   {
     id: 0,
-    name: "Sunstone Flats",
+    name: "Albuquerque",
     start: 180,
     left: 0,
     end: 7200,
@@ -11,11 +11,11 @@ export const levels = [
     shop: 1200,
     safe: 3900,
     description:
-      "Learn the trail: slow tumbleweeds, broad paths, and two loops.",
+      "Run beneath the Sandia Mountains, cross the Rio Grande, and loop through Albuquerque.",
   },
   {
     id: 1,
-    name: "Copper Mesa",
+    name: "Austin, Texas",
     start: 7980,
     left: 7800,
     end: 14800,
@@ -23,11 +23,11 @@ export const levels = [
     shop: 8200,
     safe: 11600,
     description:
-      "Jump the rolling boulders and explore the stepped mesa ledges.",
+      "Road trip to Austin! Jump construction barriers, race through the skyline, and reach the fictional Austin Launch Works.",
   },
   {
     id: 2,
-    name: "Windbreak Canyon",
+    name: "The Moon",
     start: 15780,
     left: 15600,
     end: 22400,
@@ -35,7 +35,7 @@ export const levels = [
     shop: 16000,
     safe: 20500,
     description:
-      "Watch the wind warnings and cross the moving bridges. Relaxed mode keeps a safety path under the bridges.",
+      "Touch down on the Moon! Float through low gravity, dodge timed energy gates and rolling meteorites, and cross lunar platforms. Relaxed mode adds safety paths.",
   },
 ];
 export const FINISH_X = levels[2].end;

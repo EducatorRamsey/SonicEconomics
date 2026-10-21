@@ -51,6 +51,7 @@ export class Desert extends Phaser.Scene {
     makeTextures(this);
     const level = levels[progress.level];
     this.stageCheckpoint = progress.x >= level.safe;
+    this.physics.world.gravity.y = progress.level === 2 ? 650 : 1120;
     this.physics.world.setBounds(
       level.left,
       -300,
@@ -64,8 +65,16 @@ export class Desert extends Phaser.Scene {
     this.physics.add.collider(this.player, platforms);
     this.tokens = this.physics.add.staticGroup();
     tokenPositions.forEach((p, i) => {
-      if (!progress.collected.includes(i)) {
-        const t = this.tokens.create(p.x, p.y, "token");
+      if (
+        p.x >= level.left &&
+        p.x < level.right &&
+        !progress.collected.includes(i)
+      ) {
+        const t = this.tokens.create(
+          p.x,
+          p.y,
+          ["token", "chip", "crystal"][progress.level],
+        );
         t.setData("id", i);
       }
     });
@@ -83,7 +92,11 @@ export class Desert extends Phaser.Scene {
         const h = this.hazards.create(
           o.x,
           o.kind === "wind" ? 456 : o.kind === "boulder" ? 475 : 482,
-          o.kind,
+          o.kind === "wind"
+            ? "energy"
+            : progress.level === 1
+              ? "barrier"
+              : o.kind,
         ) as Phaser.Physics.Arcade.Sprite;
         if (o.kind === "tumbleweed") h.setCircle(15, 3, 3);
         if (o.kind === "boulder") h.setCircle(22, 3, 3);
@@ -91,7 +104,7 @@ export class Desert extends Phaser.Scene {
           h.setSize(42, 80);
           h.setAlpha(0.7);
           const label = this.add
-            .text(o.x, 393, "Wind building", {
+            .text(o.x, 393, "Gate charging", {
               fontSize: "12px",
               color: "#254c49",
               backgroundColor: "#f6efd8",
@@ -101,6 +114,7 @@ export class Desert extends Phaser.Scene {
           h.setData("label", label);
           this.windLabels.push(label);
         }
+        if (progress.level === 2 && o.kind === "boulder") h.setTint(0xc8b3e2);
         h.setData("home", o.x)
           .setData("phase", i)
           .setData("kind", o.kind)
@@ -225,10 +239,25 @@ export class Desert extends Phaser.Scene {
     this.runTime += dt * 1000;
     progress.elapsed += dt;
     progress.boost = Math.max(0, progress.boost - dt);
+    progress.magnet = Math.max(0, progress.magnet - dt);
+    progress.boots = Math.max(0, progress.boots - dt);
+    if (progress.magnet > 0)
+      for (const obj of this.tokens.getChildren().slice()) {
+        const token = obj as Phaser.Physics.Arcade.Sprite;
+        if (
+          Phaser.Math.Distance.Between(
+            this.player.x,
+            this.player.y,
+            token.x,
+            token.y,
+          ) < 150
+        )
+          this.collect(token);
+      }
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.player.setAlpha(this.invulnerable > 0 ? 0.65 : 1);
     if (!this.loops.update(dt))
-      this.player.move(this.runTime, progress.boost > 0);
+      this.player.move(this.runTime, progress.boost > 0, true);
     else
       this.tokens
         .getChildren()
@@ -253,10 +282,10 @@ export class Desert extends Phaser.Scene {
         h.setData("danger", cycle >= 1500 && cycle < 3000);
         (h.getData("label") as Phaser.GameObjects.Text).setText(
           cycle < 1500
-            ? "Wind building"
+            ? "Gate charging"
             : cycle < 3000
-              ? "Wind on · jump"
-              : "Calm · go",
+              ? "Energy on · jump"
+              : "Gate off · go",
         );
       } else {
         const stone = kind === "boulder";
@@ -264,7 +293,8 @@ export class Desert extends Phaser.Scene {
           h.getData("home") +
           Math.sin(this.runTime / (stone ? 550 : 1000) + h.getData("phase")) *
             (stone ? 105 : 34);
-        if (!settings.reduced) h.rotation += dt * (stone ? 2.2 : 1.1);
+        if (!settings.reduced && progress.level !== 1)
+          h.rotation += dt * (stone ? 2.2 : 1.1);
       }
       return true;
     });

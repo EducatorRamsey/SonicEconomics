@@ -43,7 +43,7 @@ export const questions: Question[] = [
     concept: "Choices & trade-offs",
     title: "Supplies for the trail",
     prompt:
-      "You have 6 tokens. A shield costs 6, and a jump boost costs 4. You cannot buy both. What makes you choose?",
+      "At the Moon store, you have 12 tokens. Meteor armor costs 12, and jump jets cost 9. You cannot buy both. What makes you choose?",
     answers: [
       "You must buy both upgrades.",
       "Your tokens are limited, so you compare the choices.",

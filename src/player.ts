@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { settings } from "./state";
+import { settings, progress, save } from "./state";
 import { cue } from "./audio";
 export class Runner extends Phaser.Physics.Arcade.Sprite {
   held = { left: false, right: false, jump: false };
@@ -30,13 +30,14 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
       up: keyboard.addKey("UP"),
     };
   }
-  move(time: number, boost: boolean) {
+  move(time: number, boost: boolean, outdoor = false) {
     const body = this.body as Phaser.Physics.Arcade.Body;
     const grounded = body.blocked.down;
     if (grounded) this.lastGround = time;
     const { axis, jump } = this.controls();
 
-    if (jump && !this.wasJump) this.jumpQueued = time + 130;
+    const pressed = jump && !this.wasJump;
+    if (pressed) this.jumpQueued = time + 130;
     this.wasJump = jump;
     const reversing =
       axis &&
@@ -44,12 +45,27 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
       Math.abs(body.velocity.x) > 30;
     this.setAccelerationX(axis * (reversing ? 2100 : 1100));
     this.setDragX(420);
-    this.setMaxVelocity(600 * settings.speed, 900);
+    this.setMaxVelocity(
+      600 * settings.speed * (outdoor && progress.boots > 0 ? 1.25 : 1),
+      900,
+    );
     if (axis) this.setFlipX(axis < 0);
     if (this.jumpQueued > time && time - this.lastGround < 110) {
       this.setVelocityY(boost ? -585 : -465);
       this.jumpQueued = 0;
       this.lastGround = -1000;
+      cue("jump");
+    } else if (
+      pressed &&
+      outdoor &&
+      !grounded &&
+      time - this.lastGround >= 110 &&
+      progress.jets > 0
+    ) {
+      progress.jets--;
+      this.setVelocityY(-420);
+      this.jumpQueued = 0;
+      save();
       cue("jump");
     }
     this.setTexture(

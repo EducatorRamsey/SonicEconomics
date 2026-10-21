@@ -1,7 +1,8 @@
+import { stores, inventories } from "./inventory";
 import Phaser from "phaser";
 import { Runner } from "./player";
 import { makeTextures } from "./level";
-import { settings } from "./state";
+import { settings, progress } from "./state";
 import { music } from "./audio";
 export class TradingPost extends Phaser.Scene {
   player!: Runner;
@@ -15,11 +16,12 @@ export class TradingPost extends Phaser.Scene {
     makeTextures(this);
     this.physics.world.setBounds(0, 0, 960, 650);
     const g = this.add.graphics();
-    g.fillStyle(0xead4ac);
+    const stage = progress.level;
+    g.fillStyle([0xead4ac, 0xd2e4ec, 0x202d46][stage]);
     g.fillRect(0, 0, 960, 540);
-    g.fillStyle(0xc88c67);
+    g.fillStyle([0xc88c67, 0x8dabbc, 0x657a97][stage]);
     g.fillRect(0, 90, 960, 340);
-    g.fillStyle(0xb57854);
+    g.fillStyle([0xb57854, 0x647e91, 0x3e506e][stage]);
     g.fillRect(0, 430, 960, 110);
     for (let x = 0; x < 960; x += 96) {
       g.lineStyle(2, 0x9e684d);
@@ -44,6 +46,27 @@ export class TradingPost extends Phaser.Scene {
         g.fillRoundedRect(320 + col * 48, 177 + row * 85, 27, 33, 5);
       }
     }
+    if (stage === 1) {
+      g.fillStyle(0xbfe8f1);
+      g.fillRoundedRect(735, 150, 160, 155, 55);
+      for (let x = 750; x < 880; x += 35) {
+        g.fillStyle(0x597d96);
+        g.fillRect(x, 200 + (x % 3) * 15, 25, 90);
+        g.fillStyle(0xd1ebe8);
+        g.fillRect(x + 7, 230, 10, 8);
+      }
+      g.fillStyle(0x478fa8);
+      g.fillRect(740, 285, 150, 20);
+    }
+    if (stage === 2) {
+      g.fillStyle(0x101628);
+      g.fillRoundedRect(735, 150, 160, 155, 55);
+      g.fillStyle(0x5ca3d7);
+      g.fillCircle(815, 215, 37);
+      g.fillStyle(0xd5e7ff);
+      g.fillCircle(760, 180, 2);
+      g.fillCircle(870, 267, 2);
+    }
     // Original tortoise shopkeeper behind the counter.
     g.fillStyle(0x698e71);
     g.fillEllipse(670, 353, 76, 52);
@@ -55,25 +78,39 @@ export class TradingPost extends Phaser.Scene {
     g.fillStyle(0xe7b879);
     g.fillRect(567, 370, 277, 18);
     this.add
-      .text(707, 409, "SHIELDS &\nSPRING STEPS", {
-        fontSize: "19px",
-        color: "#fff1c9",
-        align: "center",
-        fontStyle: "bold",
-      })
+      .text(
+        707,
+        409,
+        inventories[stage].map((item) => item.name.toUpperCase()).join("\n"),
+        {
+          fontSize: "19px",
+          color: "#fff1c9",
+          align: "center",
+          fontStyle: "bold",
+        },
+      )
       .setOrigin(0.5);
     this.add
-      .text(480, 92, "SUNSTONE SUPPLY CO.", {
+      .text(480, 92, stores[stage].toUpperCase(), {
         fontSize: "32px",
         color: "#2b5548",
         fontStyle: "bold",
       })
       .setOrigin(0.5);
     this.add
-      .text(480, 118, "A quiet place to make a choice.", {
-        fontSize: "16px",
-        color: "#4e6755",
-      })
+      .text(
+        480,
+        118,
+        [
+          "Albuquerque · Trail essentials",
+          "Austin · Prepare for launch",
+          "Moon habitat · Gear for low gravity",
+        ][stage],
+        {
+          fontSize: "16px",
+          color: "#4e6755",
+        },
+      )
       .setOrigin(0.5);
     this.add
       .text(645, 311, "COUNTER · E", { fontSize: "14px", color: "#254c42" })

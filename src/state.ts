@@ -21,6 +21,9 @@ export interface Progress {
   hearts: number;
   shield: number;
   boost: number;
+  magnet: number;
+  boots: number;
+  jets: number;
   elapsed: number;
   answered: number[];
   helped: number[];
@@ -41,7 +44,7 @@ export const defaults: Settings = {
   jump: "SPACE",
 };
 const fresh = (): Progress => ({
-  campaign: 3,
+  campaign: 4,
   level: 0,
   completedLevels: [],
   pendingGate: null,
@@ -50,6 +53,9 @@ const fresh = (): Progress => ({
   hearts: 3,
   shield: 0,
   boost: 0,
+  magnet: 0,
+  boots: 0,
+  jets: 0,
   elapsed: 0,
   answered: [],
   helped: [],
@@ -79,8 +85,8 @@ export let progress: Progress =
   Array.isArray(raw.collected)
     ? { ...fresh(), ...raw }
     : fresh();
-// Upgrade the old continuous trail without taking away earned currency/upgrades.
-if (raw && raw.campaign !== 3) {
+// Restart older routes with the new destinations, retaining earned supplies.
+if (raw && raw.campaign !== 4) {
   progress = {
     ...fresh(),
     tokens: progress.tokens,

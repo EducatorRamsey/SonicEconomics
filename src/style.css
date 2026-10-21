@@ -241,7 +241,7 @@ p {
 }
 #notice {
   position: absolute;
-  bottom: 20px;
+  top: 64px;
   left: 50%;
   transform: translateX(-50%);
   background: #233f3eee;
@@ -1107,5 +1107,57 @@ body.game-expanded {
     font-size: 11px;
     padding: 8px;
     min-height: 40px;
+  }
+}
+
+.rocket-flight {
+  height: 135px;
+  position: relative;
+  overflow: hidden;
+  background: #111d33;
+  border-radius: 16px;
+  margin: 16px 0;
+}
+.flight-earth {
+  position: absolute;
+  left: 24px;
+  bottom: 9px;
+  font-size: 56px;
+}
+.flight-moon {
+  position: absolute;
+  right: 28px;
+  top: 4px;
+  font-size: 75px;
+  color: #e6e5dc;
+}
+.flight-rocket {
+  position: absolute;
+  left: 72px;
+  bottom: 25px;
+  font-size: 42px;
+  animation: moon-flight 3s ease-in-out forwards;
+}
+@keyframes moon-flight {
+  from {
+    left: 72px;
+    bottom: 25px;
+    transform: scale(1);
+  }
+  to {
+    left: calc(100% - 110px);
+    bottom: 65px;
+    transform: scale(0.65);
+  }
+}
+.rocket-flight.still .flight-rocket {
+  animation: none;
+  left: 45%;
+  bottom: 50px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flight-rocket {
+    animation: none;
+    left: 45%;
   }
 }

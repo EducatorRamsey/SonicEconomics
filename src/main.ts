@@ -1,3 +1,4 @@
+import { stores, inventories, purchase } from "./inventory";
 import Phaser from "phaser";
 import { enableFullscreen } from "./fullscreen";
 import { Desert } from "./game";
@@ -17,11 +18,11 @@ import { checkpoints, levels } from "./course";
 import { music, narrate, stopSpeech, cue } from "./audio";
 import "./style.css";
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-label="Roadrunner Rush home"><span class="brand-icon"><svg width="25" height="25" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7H12M25 7v13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>ROADRUNNER<span class="brand-light"> RUSH</span></span></a><span class="edition">NEW MEXICO · THREE-LEVEL ADVENTURE</span><button id="global-settings" class="quiet">⚙ <span>Settings</span></button></header>
-<main><div class="page-intro"><div><span class="eyebrow">THE DESERT TRAIL · FIRST ADVENTURE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
-<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> NEW MEXICO TRAIL <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling desert platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Enter store · E</button><div id="store-controls" role="region" aria-label="Store controls" hidden><span>SUNSTONE SUPPLY · Walk with ← → · E at the counter or door</span><button id="store-browse" class="secondary">Browse upgrades</button><button id="store-exit" class="primary">Leave store</button></div><div id="overlay"></div></div>
+app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-label="Roadrunner Rush home"><span class="brand-icon"><svg width="25" height="25" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7H12M25 7v13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>ROADRUNNER<span class="brand-light"> RUSH</span></span></a><span class="edition">ALBUQUERQUE → AUSTIN → THE MOON</span><button id="global-settings" class="quiet">⚙ <span>Settings</span></button></header>
+<main><div class="page-intro"><div><span class="eyebrow">FROM THE SOUTHWEST TO SPACE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
+<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> ROAD TO THE MOON <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling Earth-to-Moon platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Enter store · E</button><div id="store-controls" role="region" aria-label="Store controls" hidden><span>SUNSTONE SUPPLY · Walk with ← → · E at the counter or door</span><button id="store-browse" class="secondary">Browse upgrades</button><button id="store-exit" class="primary">Leave store</button></div><div id="overlay"></div></div>
 <div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
-<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Three trails, three challenges. One economics checkpoint at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Three Trails v3 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
+<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. One economics checkpoint at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Moonbound v4 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const scene = new Desert();
@@ -35,6 +36,7 @@ const store = new TradingPost({
   },
 });
 let previous = "title";
+let flightNumber = 0;
 let noticeTimer: ReturnType<typeof setTimeout>;
 function hud() {
   document.querySelector(".keyboard-guide span")!.textContent =
@@ -46,7 +48,7 @@ function hud() {
     "♥ ".repeat(progress.hearts) + "♡ ".repeat(3 - progress.hearts);
   $("hearts").setAttribute("aria-label", `${progress.hearts} hearts`);
   $("power").textContent =
-    `${progress.shield ? `◌ Shield ×${progress.shield} ` : ""}${progress.boost > 0 ? `↑ ${Math.ceil(progress.boost)}s` : ""}`;
+    `${progress.shield ? `◌ Shield ×${progress.shield} ` : ""}${progress.boost > 0 ? `↑ ${Math.ceil(progress.boost)}s ` : ""}${progress.magnet > 0 ? `⌁ ${Math.ceil(progress.magnet)}s ` : ""}${progress.boots > 0 ? `» ${Math.ceil(progress.boots)}s ` : ""}${progress.jets ? `⇧ Jets ×${progress.jets}` : ""}`;
   $("timer").hidden = settings.mode !== "challenge";
   $("timer").textContent =
     `${Math.floor(progress.elapsed / 60)}:${String(Math.floor(progress.elapsed % 60)).padStart(2, "0")}`;
@@ -147,7 +149,7 @@ function button(id: string, fn: () => void) {
 function title() {
   modal(
     "title",
-    `<div class="eyebrow">WELCOME TO SUNSTONE VALLEY</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Run three trails. Visit the stores. Answer one question at each finish.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
+    `<div class="eyebrow">ALBUQUERQUE → AUSTIN → THE MOON</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Run Albuquerque, visit Austin’s launch site, then ride a rocket to the Moon. Each destination has its own store and one question at the finish.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
   );
   button("start", () => {
     if (hasSave()) confirmNew();
@@ -171,7 +173,7 @@ function begin() {
   scene.reset();
   play();
   notice(
-    "Level 1 · Sunstone Flats. Practice, enter the store with E, then run the loops. One question waits at the finish.",
+    "Level 1 · Albuquerque. Practice, enter the store with E, then run the loops. One question waits at the finish.",
   );
 }
 function confirmNew() {
@@ -297,12 +299,14 @@ function shop() {
 function showStore() {
   $("canvas").setAttribute(
     "aria-label",
-    "Inside Sunstone Supply. Walk to the counter or door and press E, or use Browse upgrades and Leave store buttons.",
+    `Inside ${stores[progress.level]}. Walk to the counter or door and press E, or use Browse upgrades and Leave store buttons.`,
   );
   screen = "store";
   $("overlay").hidden = true;
   $("overlay").innerHTML = "";
   $("store-controls").hidden = false;
+  $("store-controls").querySelector("span")!.textContent =
+    `${stores[progress.level].toUpperCase()} · Walk with ← → · E at the counter or door`;
   store.input?.keyboard?.enableGlobalCapture();
   store.setPlaying(true);
   hud();
@@ -323,7 +327,7 @@ function leaveStore() {
 function storePause() {
   modal(
     "store-pause",
-    `<span class="eyebrow">SUNSTONE SUPPLY</span><h2 id="dialog-title">Take your time.</h2><div class="stack"><button id="store-resume" class="primary">Resume in the store</button><button id="store-settings" class="secondary">Settings</button><button id="store-leave-pause" class="secondary">Leave store</button></div>`,
+    `<span class="eyebrow">${stores[progress.level]}</span><h2 id="dialog-title">Take your time.</h2><div class="stack"><button id="store-resume" class="primary">Resume in the store</button><button id="store-settings" class="secondary">Settings</button><button id="store-leave-pause" class="secondary">Leave store</button></div>`,
   );
   button("store-resume", showStore);
   button("store-settings", openSettings);
@@ -333,54 +337,68 @@ function levelComplete() {
   const next = levels[progress.level + 1];
   modal(
     "level-complete",
-    `<span class="eyebrow">LEVEL ${progress.level + 1} OF 3 COMPLETE</span><h2 id="dialog-title">${levels[progress.level].name} complete.</h2><p>Your answer, tokens, and upgrades are saved.</p><div class="next-level-card"><h3>Next: ${next.name}</h3><p>${next.description}</p><p>Three hearts for the next trail. Your tokens and upgrades come with you.</p></div><button id="next-level" class="primary">Start level ${next.id + 1} →</button><button id="level-settings" class="secondary">Settings</button>`,
+    `<span class="eyebrow">LEVEL ${progress.level + 1} OF 3 COMPLETE</span><h2 id="dialog-title">${levels[progress.level].name} complete.</h2><p>Your answer, tokens, and upgrades are saved.</p><div class="next-level-card"><h3>Next: ${next.name}</h3><p>${next.description}</p><p>Three hearts for the next trail. Your tokens and upgrades come with you.</p></div><button id="next-level" class="primary">${progress.level === 1 ? "Board the rocket →" : "Travel to Austin →"}</button><button id="level-settings" class="secondary">Settings</button>`,
   );
   button("next-level", () => {
+    if (progress.level === 1) {
+      rocketFlight();
+      return;
+    }
     scene.advanceLevel();
     play();
     notice(`Level ${next.id + 1} · ${next.name}. ${next.description}`);
   });
   button("level-settings", openSettings);
 }
+function rocketFlight() {
+  const flight = ++flightNumber;
+  modal(
+    "rocket",
+    `<span class="eyebrow">AUSTIN LAUNCH WORKS · FICTIONAL SPACEPORT</span><h2 id="dialog-title">Next stop: the Moon!</h2><div class="rocket-flight ${settings.reduced ? "still" : ""}" aria-hidden="true"><span class="flight-earth"><svg width="65" height="65" viewBox="0 0 65 65"><circle cx="32" cy="32" r="30" fill="#5b9ccb"/><path d="m17 9 20 4-4 17-18-3-6-11m28 22 17-4-4 18-12 8-9-15" fill="#9ac49b"/></svg></span><span class="flight-rocket"><svg width="48" height="56" viewBox="0 0 48 56"><path d="m8 39 8-22L37 3l-2 25-15 17Z" fill="#f4eddb"/><path d="m8 27-6 17 14-6m11 0-2 16 13-19" fill="#ca6c58"/><circle cx="29" cy="19" r="6" fill="#5faec7"/><path d="m10 43-6 10 12-6" fill="#e7ba70"/></svg></span><span class="flight-moon">☾</span></div><p role="status">Launch from Austin. Leave Earth behind. Touch down at Tranquility Trail.</p><button id="land-now" class="primary">Skip flight · Land on the Moon</button>`,
+  );
+  const land = () => {
+    if (screen !== "rocket" || flight !== flightNumber) return;
+    scene.advanceLevel();
+    play();
+    notice(
+      "Welcome to the Moon! Lower gravity makes jumps last longer. Crystals spend like tokens; energy gates replace wind.",
+    );
+  };
+  button("land-now", land);
+  setTimeout(land, settings.reduced ? 500 : 3200);
+}
 function browseStore() {
   if (screen !== "store") return;
   store.approachCounter();
+  const stock = inventories[progress.level];
   modal(
     "shop",
-    `<span class="eyebrow">SUNSTONE SUPPLY CO.</span><h2 id="dialog-title">A choice for the trail.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Compare the upgrades, or save for later. Neither is needed to finish.</p><div class="shop-cards"><article><span class="upgrade-icon">◌</span><h3>Trail shield</h3><p>Protects you from one hazard hit. Stays until used.</p><button id="buy-shield" class="secondary">Buy shield · 6 tokens</button></article><article><span class="upgrade-icon">↑</span><h3>Spring step</h3><p>Jump higher for 25 seconds of play. Pauses at every stop.</p><button id="buy-boost" class="secondary">Buy jump boost · 4 tokens</button></article></div><p id="shop-feedback" role="status">Limited tokens mean making a choice.</p><button id="leave-shop" class="primary">Back to the store</button>`,
+    `<span class="eyebrow">${stores[progress.level].toUpperCase()}</span><h2 id="dialog-title">A choice for this world.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Coins, chips, and crystals all count toward this balance. No upgrade is needed to finish.</p><div class="shop-cards">${stock.map((item) => `<article><span class="upgrade-icon">${item.icon}</span><h3>${item.name}</h3><p>${item.description}</p><button id="buy-${item.id}" class="secondary">Buy ${item.name} · ${item.price} tokens</button></article>`).join("")}</div><p id="shop-feedback" role="status">New destination, different equipment. Timed upgrades pause in stores and menus.</p><button id="leave-shop" class="primary">Back to the store</button>`,
     true,
   );
-  function refresh() {
-    ($("buy-shield") as HTMLButtonElement).disabled = progress.tokens < 6;
-    ($("buy-boost") as HTMLButtonElement).disabled = progress.tokens < 4;
+  const refresh = () => {
+    for (const item of stock)
+      ($("buy-" + item.id) as HTMLButtonElement).disabled =
+        progress.tokens < item.price;
     $("shop-balance").textContent = String(progress.tokens);
-  }
-  function buy(kind: "shield" | "boost") {
-    const price = kind === "shield" ? 6 : 4;
-    if (progress.tokens < price) return;
-    progress.tokens -= price;
-    if (kind === "shield") progress.shield++;
-    else progress.boost = 25;
-    progress.purchases.push(kind);
-    save();
-    hud();
-    refresh();
-    $("shop-feedback").textContent =
-      kind === "shield"
-        ? "Shield ready. It will protect one heart."
-        : "Jump boost ready. Enjoy 25 seconds of higher jumps!";
-    $("leave-shop").textContent = "Back to the store";
-    cue("reward");
-  }
-  button("buy-shield", () => buy("shield"));
-  button("buy-boost", () => buy("boost"));
+  };
+  for (const item of stock)
+    button("buy-" + item.id, () => {
+      if (!purchase(item.id)) return;
+      save();
+      hud();
+      refresh();
+      cue("reward");
+      $("shop-feedback").textContent =
+        `${item.name} ready. ${item.description}`;
+    });
   button("leave-shop", showStore);
   refresh();
 }
 function ending() {
   modal(
     "ending",
-    `<span class="eyebrow">NEW MEXICO · ALL THREE LEVELS COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You finished Sunstone Flats, Copper Mesa, and Windbreak Canyon.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.answered.length} / 3</b><span>questions answered</span></div><div><b>${progress.helped.filter((id) => progress.answered.includes(id)).length}</b><span>answered after help</span></div></div><p><strong>Trail ideas:</strong> scarcity, opportunity cost, and trade-offs. ${progress.answered.length < 3 ? "Practice when you are ready below." : "All three ideas practiced."}</p><ul class="answer-summary">${questions.map((q) => `<li>${q.concept} · ${progress.answered.includes(q.id) ? (progress.helped.includes(q.id) ? "answered after help" : "answered") : "not practiced yet"}</li>`).join("")}</ul><label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p><button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
+    `<span class="eyebrow">EARTH TO THE MOON · ALL THREE STAGES COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You crossed Albuquerque, reached the launch site in Austin, and explored the Moon.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.answered.length} / 3</b><span>questions answered</span></div><div><b>${progress.helped.filter((id) => progress.answered.includes(id)).length}</b><span>answered after help</span></div></div><p><strong>Trail ideas:</strong> scarcity, opportunity cost, and trade-offs. ${progress.answered.length < 3 ? "Practice when you are ready below." : "All three ideas practiced."}</p><ul class="answer-summary">${questions.map((q) => `<li>${q.concept} · ${progress.answered.includes(q.id) ? (progress.helped.includes(q.id) ? "answered after help" : "answered") : "not practiced yet"}</li>`).join("")}</ul><label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p><button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
     true,
   );
   button("again", confirmNew);
@@ -449,7 +467,8 @@ function openSettings() {
       browseStore();
     } else if (previous === "store") showStore();
     else if (previous === "store-pause") storePause();
-    else if (previous === "level-complete") levelComplete();
+    else if (previous === "level-complete" || previous === "rocket")
+      levelComplete();
     else pause();
   });
 }

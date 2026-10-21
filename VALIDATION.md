@@ -76,3 +76,19 @@ Validation outcomes:
 - Reviewed the rendered store interior at Chromebook-sized fullscreen; no uncaught errors in that check.
 
 Existing limitations remain: actual device voice/audio quality, physical touch hardware, non-Chromium browsers, and live GitHub Pages deployment propagation are not verified here. GitHub Pages checks from the workspace remain network-blocked. The release artifact and build are independently tested before the Git push.
+
+## Moonbound v4 · October 21, 2026
+
+Replaced the shared desert backdrop with three destination-specific scene builds: Albuquerque (Sandia Mountains, adobe buildings, balloons, Rio Grande bridge, local vegetation), Austin (skyline, lake, oaks, construction steps and barriers, fictional Austin Launch Works), and the Moon (starfield, Earth, craters, lander, habitat, meteorites and timed energy gates). Each stage is rebuilt on arrival with only its own art, terrain, pickups, hazards and camera/world bounds. Moon gravity is 650 rather than Earth's 1120; loops retain their assisted surface controls. No wind or vegetation appears on the Moon.
+
+Currency changes from coins to electronic chips to lunar crystals, with a shared balance. Store names, interiors, counter labels, inventory, prices and effects change by destination. Austin introduces a 150-pixel collection magnet and 25% speed boots. Moon inventory provides three-hit armor and three consumable midair jump jets. Timed effects pause indoors and at all menus/questions/travel; equipment carries between stages. The Moon question now uses the lunar equipment prices.
+
+Austin's mandatory question unlocks a rocket departure card and original vector rocket animation. The flight lands automatically or can be skipped with an accessible button. Reduced motion uses a static flight view. The saved departure card remains available after reloading during travel. Austin's launch facility is explicitly fictional; the game does not relocate NASA's Houston space center.
+
+The campaign save version advances to 4. Earlier saves start the new journey in Albuquerque, preserving earned currency, shields, spring-step time, purchase history and comfort settings.
+
+Initial focused desktop validation: five checks passed, including a complete gentle-speed three-stage/six-loop traversal using normal inputs, mandatory question/retry/reward rules, timed energy gates/platform carry/Challenge jumps, old-save migration, and new destination/inventory/rocket mechanics. The new equipment check verifies actual currency attraction, faster movement, paused timers, armor charges and a consumed midair jet with upward velocity, along with distinct pickup/hazard textures and active-scene labels. TypeScript and production/standalone builds pass, with the existing Phaser bundle-size advisory.
+
+Visually reviewed all three starting areas at Chromebook resolution. A final layout adjustment keeps destination names clear of the checkpoint badges and moves notices away from the runner's ground path.
+
+Final regression suite: **24 passed (6.7 minutes)** across desktop and Chromebook viewports, including full ordinary-input runs through all three stages, automatic rocket arrival, all six loops, both native/fallback fullscreen modes, physical store interactions, mandatory gates, saves, new equipment and lunar collision/platform physics. No failed cases. After the label/notice positioning adjustment, regenerated the standalone release and checked it separately at both viewport sizes, including fullscreen, all destination labels, lunar purchases and saved equipment after reload. Live GitHub Pages propagation remains unverified because this workspace cannot fetch the public site.
