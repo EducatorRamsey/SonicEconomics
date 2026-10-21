@@ -49,3 +49,10 @@ Live site checks from this workspace are blocked by the network proxy for educat
 - Both full gentle-speed traversals passed, completing all six loops without question interruptions and then answering all three questions after the finish.
 - The initial full run had 15 passes and one shop-check failure caused by a diagnostic teleport into the floor. The diagnostic helper now resets the physics body, and hazard checks spawn above the ground. Eight affected movement/physics checks were rerun; after correcting the invalid spawn height, all four final shop/recovery checks passed across both sizes. Assertions and gameplay checks were retained.
 - Live GitHub Pages propagation remains outside this workspace's network access. The committed root HTML and the Actions build both contain the updated course. The visible footer/header identify it as Loop Trail v2 / New Mexico Loop Trail Edition.
+
+## Full-screen controls · October 21, 2026
+
+- Added a Full screen / Exit full screen toolbar button, a title-menu entry, F shortcut, and Esc exit. The complete game shell enters fullscreen, keeping settings, question dialogs, pause, and touch controls inside it.
+- Added a fixed viewport-filling fallback when native fullscreen is blocked/unavailable. A ResizeObserver refreshes Phaser's FIT scaling so artwork keeps its proportions while the canvas enlarges.
+- Eight selected Playwright checks passed in 50.8 seconds: native and fallback fullscreen at desktop and Chromebook sizes, plus existing movement/platform/touch and keyboard-menu checks on both sizes. Tests assert canvas width increases by more than 100 pixels, wrapper matches the viewport, settings/questions remain usable, and button/F/Esc exits restore normal mode.
+- TypeScript and production build pass. Existing Phaser bundle-size warning remains; no new runtime dependencies were added.

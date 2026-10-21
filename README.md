@@ -22,6 +22,8 @@ In this cloud workspace, use `npm ci --cache /tmp/rr-npm-cache` if the default n
 
 ## Playing and adjusting comfort
 
+- **Full screen:** click **Play in full screen** on the title menu or **Full screen** in the game toolbar. Press **F** to toggle it and **Esc** to exit. The game expands to fit the available screen while keeping touch controls, settings, and questions visible. If the browser blocks native fullscreen, the same button fills the browser window instead.
+
 - **Move:** arrow keys or A / D. **Jump:** Space, W, or Up. Large labeled touch buttons are below the game.
 - **Loop Trail v2:** six large surface-running loops, faster acceleration, coasting momentum, and active braking. Keep holding your direction to run around the walls and upside down. Press the opposite direction to brake, or jump off the track. A forgiving speed assist keeps the loop approachable at gentle speed. The camera stays upright. Turn off **Run the loop tracks** in Settings to use the ground route instead.
 - Practice in the safe starting area. Travel right; there are no mandatory precision jumps. Low platforms and extra high tokens are optional. The ravine has a safe bridge.

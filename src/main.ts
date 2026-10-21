@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { enableFullscreen } from "./fullscreen";
 import { Desert } from "./game";
 import {
   settings,
@@ -17,7 +18,7 @@ import "./style.css";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-label="Roadrunner Rush home"><span class="brand-icon"><svg width="25" height="25" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7H12M25 7v13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>ROADRUNNER<span class="brand-light"> RUSH</span></span></a><span class="edition">NEW MEXICO · LOOP TRAIL EDITION</span><button id="global-settings" class="quiet">⚙ <span>Settings</span></button></header>
 <main><div class="page-intro"><div><span class="eyebrow">THE DESERT TRAIL · FIRST ADVENTURE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
-<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> NEW MEXICO TRAIL <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling desert platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Visit trail shop · E</button><div id="overlay"></div></div>
+<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> NEW MEXICO TRAIL <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling desert platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Visit trail shop · E</button><div id="overlay"></div></div>
 <div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
 <section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Run the loops. Stop for economics when you choose, or practice after the finish.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Loop Trail v2 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -103,6 +104,13 @@ const game = new Phaser.Game({
   render: { antialias: true },
   input: { keyboard: true },
 });
+const toggleFullscreen = enableFullscreen(
+  document.querySelector<HTMLElement>(".game-shell")!,
+  $("fullscreen") as HTMLButtonElement,
+  () => {
+    if (game.isBooted) game.scale.refresh();
+  },
+);
 function modal(kind: string, html: string, wide = false) {
   screen = kind;
   scene.setPlaying(false);
@@ -132,7 +140,7 @@ function button(id: string, fn: () => void) {
 function title() {
   modal(
     "title",
-    `<div class="eyebrow">WELCOME TO SUNSTONE VALLEY</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Collect tokens, explore the desert, and discover the economics of everyday choices.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
+    `<div class="eyebrow">WELCOME TO SUNSTONE VALLEY</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Collect tokens, explore the desert, and discover the economics of everyday choices.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
   );
   button("start", () => {
     if (hasSave()) confirmNew();
@@ -144,6 +152,7 @@ function title() {
       else play();
     });
   button("title-settings", openSettings);
+  button("title-fullscreen", () => void toggleFullscreen());
 }
 function begin() {
   reviewing = false;
@@ -361,6 +370,9 @@ function openSettings() {
     } else pause();
   });
 }
+button("game-settings", () => {
+  if (screen !== "settings") openSettings();
+});
 button("global-settings", () => {
   if (screen !== "settings") openSettings();
 });
