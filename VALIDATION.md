@@ -37,3 +37,15 @@ The reported public page displayed the initial README because the game had not b
 After this change, the production build and six desktop/Chromebook regression cases passed (movement/collisions, all questions and narration controls, keyboard menus/assets). A browser test also served the exact deployment artifact at the site's URL path using local request interception, started the game, moved the player, answered all three questions, and reached the ending. It required only the HTML request, with no uncaught errors or other file requests. This checks the artifact, not the live GitHub Pages deployment.
 
 Live site checks from this workspace are blocked by the network proxy for educatorramsey.github.io, so deployment propagation must be confirmed by refreshing the public website.
+
+## Loop Trail v2 · October 21, 2026
+
+- Added six surface-running loops with inverted character orientation, gravity-dependent speed, held-direction acceleration, opposite-direction braking, jump exits, paused simulation, and a ground-route comfort toggle.
+- Increased top running speed from 280 to 600 units/second with gentler coasting and active braking. Extended the course to 23,200 units.
+- Question stops at 6,500 / 14,200 / 21,800 are opt-in. Full runs never open a question automatically, and finishing offers a separate review of unanswered questions. Safe progress still saves at rest stops.
+- Replaced the branched saguaro silhouettes with prickly pear and flowering yucca. Visually inspected the rendered loop with the runner upside down and the revised vegetation.
+- Production build and TypeScript check pass. The existing Phaser bundle-size warning remains.
+- Sixteen browser scenarios verified across desktop and Chromebook configurations: the original six per viewport, updated for optional questions and the longer course, plus loop mechanics and the persisted ground-route preference.
+- Both full gentle-speed traversals passed, completing all six loops without question interruptions and then answering all three questions after the finish.
+- The initial full run had 15 passes and one shop-check failure caused by a diagnostic teleport into the floor. The diagnostic helper now resets the physics body, and hazard checks spawn above the ground. Eight affected movement/physics checks were rerun; after correcting the invalid spawn height, all four final shop/recovery checks passed across both sizes. Assertions and gameplay checks were retained.
+- Live GitHub Pages propagation remains outside this workspace's network access. The committed root HTML and the Actions build both contain the updated course. The visible footer/header identify it as Loop Trail v2 / New Mexico Loop Trail Edition.

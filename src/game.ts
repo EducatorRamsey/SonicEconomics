@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { Runner } from "./player";
+import { LoopRunner } from "./loops";
+import { FINISH_X, SHOP_X } from "./course";
 import {
   drawLevel,
   makeTextures,
@@ -12,6 +14,7 @@ import { progress, settings, save } from "./state";
 import { cue, music } from "./audio";
 export interface Bridge {
   ready: () => void;
+  rest: (id: number | null) => void;
   question: (id: number) => void;
   finish: () => void;
   hud: () => void;
@@ -20,6 +23,8 @@ export interface Bridge {
 }
 export class Desert extends Phaser.Scene {
   player!: Runner;
+  loops!: LoopRunner;
+  private restNear: number | null = null;
   hazards!: Phaser.Physics.Arcade.Group;
   tokens!: Phaser.Physics.Arcade.StaticGroup;
   activePlay = false;
@@ -45,6 +50,9 @@ export class Desert extends Phaser.Scene {
     this.physics.world.setBounds(0, -300, WORLD_WIDTH, 1100);
     const platforms = drawLevel(this);
     this.player = new Runner(this, progress.x);
+    this.loops = new LoopRunner(this.player);
+    this.restNear = null;
+    this.bridge.rest(null);
     this.physics.add.collider(this.player, platforms);
     this.tokens = this.physics.add.staticGroup();
     tokenPositions.forEach((p, i) => {
@@ -53,16 +61,9 @@ export class Desert extends Phaser.Scene {
         t.setData("id", i);
       }
     });
-    this.physics.add.overlap(this.player, this.tokens, (_p, t) => {
-      if (!this.activePlay) return;
-      const obj = t as Phaser.Physics.Arcade.Sprite;
-      progress.collected.push(obj.getData("id"));
-      progress.tokens++;
-      obj.destroy();
-      cue("token");
-      save();
-      this.bridge.hud();
-    });
+    this.physics.add.overlap(this.player, this.tokens, (_p, t) =>
+      this.collect(t as Phaser.Physics.Arcade.Sprite),
+    );
     this.hazards = this.physics.add.group({
       allowGravity: false,
       immovable: true,
@@ -110,10 +111,20 @@ export class Desert extends Phaser.Scene {
     }
     music(active);
   }
+  private collect(obj: Phaser.Physics.Arcade.Sprite) {
+    if (!this.activePlay || !obj.active) return;
+    progress.collected.push(obj.getData("id"));
+    progress.tokens++;
+    obj.destroy();
+    cue("token");
+    save();
+    this.bridge.hud();
+  }
   reset() {
     this.scene.restart({ play: true });
   }
   recover() {
+    this.loops.reset();
     this.player.setPosition(progress.x, 420);
     this.player.setVelocity(0, 0);
     this.invulnerable = 2.5;
@@ -154,7 +165,24 @@ export class Desert extends Phaser.Scene {
     progress.boost = Math.max(0, progress.boost - dt);
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.player.setAlpha(this.invulnerable > 0 ? 0.65 : 1);
-    this.player.move(this.runTime, progress.boost > 0);
+    if (!this.loops.update(dt))
+      this.player.move(this.runTime, progress.boost > 0);
+    else
+      this.tokens
+        .getChildren()
+        .slice()
+        .forEach((obj) => {
+          const token = obj as Phaser.Physics.Arcade.Sprite;
+          if (
+            Phaser.Math.Distance.Between(
+              this.player.x,
+              this.player.y,
+              token.x,
+              token.y,
+            ) < 34
+          )
+            this.collect(token);
+        });
     this.hazards.children.iterate((child) => {
       const h = child as Phaser.Physics.Arcade.Sprite;
       h.x =
@@ -164,23 +192,28 @@ export class Desert extends Phaser.Scene {
       return true;
     });
     if (this.player.y > 640) this.recover();
-    for (let i = 0; i < checkpoints.length; i++) {
-      if (
-        this.player.x >= checkpoints[i].x - 40 &&
-        !progress.answered.includes(i)
-      ) {
-        progress.x = checkpoints[i].x - 85;
+    // Crossing a rest stop saves a safe position without interrupting the run.
+    for (const c of checkpoints) {
+      if (this.player.x >= c.x && progress.x < c.x) {
+        progress.x = c.x + 70;
         save();
-        this.bridge.question(i);
-        break;
       }
     }
-    const near = Math.abs(this.player.x - 1710) < 175;
+    const rest = checkpoints.findIndex(
+      (c, i) =>
+        Math.abs(this.player.x - c.x) < 360 && !progress.answered.includes(i),
+    );
+    const restId = rest < 0 ? null : rest;
+    if (restId !== this.restNear) {
+      this.restNear = restId;
+      this.bridge.rest(restId);
+    }
+    const near = Math.abs(this.player.x - SHOP_X) < 175;
     if (near !== this.shopNear) {
       this.shopNear = near;
       this.bridge.nearby(near);
     }
-    if (this.player.x >= 5215 && progress.answered.length === 3) {
+    if (this.player.x >= FINISH_X) {
       progress.finished = true;
       save();
       this.bridge.finish();

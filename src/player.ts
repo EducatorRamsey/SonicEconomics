@@ -34,20 +34,17 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     const grounded = body.blocked.down;
     if (grounded) this.lastGround = time;
-    const l = this.held.left || this.keys.left.isDown || this.keys.a.isDown;
-    const r = this.held.right || this.keys.right.isDown || this.keys.d.isDown;
-    const jump =
-      this.held.jump ||
-      this.keys.jump.isDown ||
-      this.keys.space.isDown ||
-      this.keys.w.isDown ||
-      this.keys.up.isDown;
+    const { axis, jump } = this.controls();
+
     if (jump && !this.wasJump) this.jumpQueued = time + 130;
     this.wasJump = jump;
-    const axis = Number(r) - Number(l);
-    this.setAccelerationX(axis * 1700);
-    this.setDragX(1900);
-    this.setMaxVelocity(280 * settings.speed, 900);
+    const reversing =
+      axis &&
+      Math.sign(body.velocity.x) !== axis &&
+      Math.abs(body.velocity.x) > 30;
+    this.setAccelerationX(axis * (reversing ? 2100 : 1100));
+    this.setDragX(420);
+    this.setMaxVelocity(600 * settings.speed, 900);
     if (axis) this.setFlipX(axis < 0);
     if (this.jumpQueued > time && time - this.lastGround < 110) {
       this.setVelocityY(boost ? -585 : -465);
@@ -60,6 +57,23 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
         ? `bird${1 + (Math.floor(time / 110) % 2)}`
         : "bird0",
     );
+  }
+  controls() {
+    const left = this.held.left || this.keys.left.isDown || this.keys.a.isDown;
+    const right =
+      this.held.right || this.keys.right.isDown || this.keys.d.isDown;
+    const jump =
+      this.held.jump ||
+      this.keys.jump.isDown ||
+      this.keys.space.isDown ||
+      this.keys.w.isDown ||
+      this.keys.up.isDown;
+    return { axis: Number(right) - Number(left), jump };
+  }
+  leaveSurface() {
+    this.lastGround = -1000;
+    this.wasJump = true;
+    this.jumpQueued = 0;
   }
   clear() {
     this.held = { left: false, right: false, jump: false };

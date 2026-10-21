@@ -1,17 +1,30 @@
 import Phaser from "phaser";
-export const WORLD_WIDTH = 5580;
-export const checkpoints = [
-  { x: 940, label: "01 · Water for the town" },
-  { x: 2440, label: "02 · An afternoon choice" },
-  { x: 4390, label: "03 · Trail supplies" },
-];
-export const hazardPositions = [1330, 2790, 4010, 4770];
+import {
+  WORLD_WIDTH,
+  FINISH_X,
+  SHOP_X,
+  checkpoints,
+  loopTracks,
+} from "./course";
+export { WORLD_WIDTH, FINISH_X, SHOP_X, checkpoints } from "./course";
+export const hazardPositions = [3300, 8300, 11200, 15800, 19000, 22350];
 export const tokenPositions = [
   ...Array.from({ length: 6 }, (_, i) => ({ x: 380 + i * 90, y: 442 })),
-  ...Array.from({ length: 34 }, (_, i) => ({
-    x: 1880 + i * 94,
-    y: i % 9 === 4 ? 365 : 442,
+  ...Array.from({ length: 120 }, (_, i) => ({
+    x: SHOP_X + 200 + i * 122,
+    y: i % 13 === 4 ? 365 : 442,
   })),
+  ...loopTracks
+    .filter((t) => t.x > SHOP_X)
+    .flatMap((t) =>
+      Array.from({ length: 9 }, (_, i) => {
+        const a = ((i + 1) * Math.PI * 2) / 10;
+        return {
+          x: t.x + Math.sin(a) * t.radius,
+          y: t.y + Math.cos(a) * t.radius,
+        };
+      }),
+    ),
 ];
 export function drawLevel(scene: Phaser.Scene) {
   const g = scene.add.graphics();
@@ -48,17 +61,39 @@ export function drawLevel(scene: Phaser.Scene) {
   }
   g.fillStyle(0xe9b980);
   g.fillRect(0, 408, WORLD_WIDTH, 140);
+  // New Mexico vegetation: low prickly-pear pads and narrow-leaved yucca.
   for (let x = 140; x < WORLD_WIDTH; x += 480) {
-    g.fillStyle(0x708764);
-    g.fillRoundedRect(x, 361, 14, 98, 6);
-    g.fillRoundedRect(x - 24, 388, 12, 39, 5);
-    g.fillRoundedRect(x - 24, 415, 30, 12, 5);
-    g.fillRoundedRect(x + 24, 372, 12, 42, 5);
-    g.fillRoundedRect(x + 8, 402, 28, 12, 5);
+    g.fillStyle(0x6d8260);
+    if (Math.floor(x / 480) % 2 === 0) {
+      g.fillEllipse(x, 448, 24, 38);
+      g.fillEllipse(x - 17, 430, 22, 31);
+      g.fillEllipse(x + 18, 427, 24, 34);
+      g.fillStyle(0xb77657);
+      g.fillEllipse(x + 19, 409, 6, 7);
+      g.lineStyle(1, 0xe2d5a3);
+      for (let n = 0; n < 3; n++)
+        g.lineBetween(x - 5 + n * 5, 436, x - 5 + n * 5, 445);
+    } else {
+      g.fillStyle(0x79825b);
+      for (let n = -3; n <= 3; n++)
+        g.fillTriangle(
+          x - 3,
+          466,
+          x + 3,
+          466,
+          x + n * 13,
+          416 + Math.abs(n) * 8,
+        );
+      g.lineStyle(3, 0x8c7852);
+      g.lineBetween(x, 449, x, 383);
+      g.fillStyle(0xf4e4b5);
+      for (let n = 0; n < 5; n++)
+        g.fillEllipse(x + (n % 2 ? 7 : -5), 390 + n * 8, 10, 7);
+    }
   }
   // Adobe village, a locally drawn landmark at the safe shop.
   for (let i = 0; i < 3; i++) {
-    const x = 1560 + i * 92;
+    const x = SHOP_X - 150 + i * 92;
     g.fillStyle([0xd38c65, 0xe4ae7c, 0xcb805e][i]);
     g.fillRect(x, 355 - i * 13, 86, 109 + i * 13);
     g.fillStyle(0x855744);
@@ -119,9 +154,22 @@ export function drawLevel(scene: Phaser.Scene) {
       .setOrigin(0.5);
   };
   sign(370, "PRACTICE · Move & jump");
-  sign(1710, "TRAIL SHOP");
+  sign(SHOP_X, "TRAIL SHOP");
   sign(3600, "EASY BRIDGE");
+  for (const loop of loopTracks) {
+    // The visible track matches the runner's constrained circular surface.
+    g.lineStyle(43, 0x925d42);
+    g.strokeCircle(loop.x, loop.y, loop.radius + 33);
+    g.lineStyle(32, 0xd9a36e);
+    g.strokeCircle(loop.x, loop.y, loop.radius + 33);
+    g.lineStyle(6, 0xf8dfaa);
+    g.strokeCircle(loop.x, loop.y, loop.radius + 17);
+    g.lineStyle(3, 0x648273);
+    g.strokeCircle(loop.x, loop.y, loop.radius + 47);
+    sign(loop.x - 330, "LOOP AHEAD · Keep running →");
+  }
   checkpoints.forEach((c, i) => {
+    sign(c.x + 155, "REST STOP · Questions optional · E");
     g.fillStyle(0xfaf2d7);
     g.fillRoundedRect(c.x - 22, 405, 44, 89, 14);
     g.lineStyle(3, 0x2c706b);
@@ -137,11 +185,11 @@ export function drawLevel(scene: Phaser.Scene) {
     g.fillCircle(c.x, 454, 7);
   });
   g.fillStyle(0x496c62);
-  g.fillRect(5215, 350, 8, 150);
+  g.fillRect(FINISH_X, 350, 8, 150);
   g.fillStyle(0xfaf0d4);
-  g.fillTriangle(5223, 352, 5320, 377, 5223, 405);
+  g.fillTriangle(FINISH_X + 8, 352, FINISH_X + 105, 377, FINISH_X + 8, 405);
   scene.add
-    .text(5210, 319, "TRAIL’S END", {
+    .text(FINISH_X - 5, 319, "TRAIL’S END", {
       fontSize: "16px",
       color: "#294c49",
       fontStyle: "bold",

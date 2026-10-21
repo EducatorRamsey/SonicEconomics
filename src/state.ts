@@ -1,4 +1,5 @@
 export interface Settings {
+  loops: boolean;
   mode: "relaxed" | "challenge";
   speed: number;
   sound: number;
@@ -23,6 +24,7 @@ export interface Progress {
   purchases: string[];
 }
 export const defaults: Settings = {
+  loops: true,
   mode: "relaxed",
   speed: 1,
   sound: 0.3,

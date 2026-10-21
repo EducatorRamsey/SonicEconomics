@@ -11,20 +11,22 @@ import {
 } from "./state";
 import { questions } from "./questions";
 import { answerQuestion } from "./economics";
-import { checkpoints } from "./level";
+import { checkpoints } from "./course";
 import { music, narrate, stopSpeech, cue } from "./audio";
 import "./style.css";
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-label="Roadrunner Rush home"><span class="brand-icon"><svg width="25" height="25" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7H12M25 7v13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>ROADRUNNER<span class="brand-light"> RUSH</span></span></a><span class="edition">A LITTLE ADVENTURE. A WORLD OF CHOICES.</span><button id="global-settings" class="quiet">⚙ <span>Settings</span></button></header>
+app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-label="Roadrunner Rush home"><span class="brand-icon"><svg width="25" height="25" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7H12M25 7v13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>ROADRUNNER<span class="brand-light"> RUSH</span></span></a><span class="edition">NEW MEXICO · LOOP TRAIL EDITION</span><button id="global-settings" class="quiet">⚙ <span>Settings</span></button></header>
 <main><div class="page-intro"><div><span class="eyebrow">THE DESERT TRAIL · FIRST ADVENTURE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
-<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> SUNSTONE VALLEY <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling desert platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="shop-open" class="primary shop-prompt" hidden>Visit trail shop · E</button><div id="overlay"></div></div>
-<div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Your pace. Your adventure.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
-<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Explore scarcity and opportunity cost as you travel. There’s always time to think.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Made for curious minds · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
+<section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> NEW MEXICO TRAIL <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling desert platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Visit trail shop · E</button><div id="overlay"></div></div>
+<div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
+<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Run the loops. Stop for economics when you choose, or practice after the finish.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Loop Trail v2 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const scene = new Desert();
 let screen = "title";
 let engineReady = false;
+let nearbyRest: number | null = null;
+let reviewing = false;
 let previous = "title";
 let noticeTimer: ReturnType<typeof setTimeout>;
 function hud() {
@@ -64,6 +66,13 @@ function notice(message: string) {
   noticeTimer = setTimeout(() => ($("notice").textContent = ""), 6500);
 }
 scene.connect({
+  rest: (id) => {
+    nearbyRest = id;
+    $("rest-open").hidden = id === null;
+    if (id !== null)
+      $("rest-open").textContent =
+        `Optional rest stop ${id + 1} · Question · E`;
+  },
   ready: () => {
     if (!engineReady) {
       engineReady = true;
@@ -137,11 +146,12 @@ function title() {
   button("title-settings", openSettings);
 }
 function begin() {
+  reviewing = false;
   newGame();
   scene.reset();
   play();
   notice(
-    "Safe practice area: try moving and jumping. Follow the trail to the right →",
+    "Practice, then build speed → Hold a direction through the loops. Questions are optional at rest stops.",
   );
 }
 function confirmNew() {
@@ -224,6 +234,15 @@ function question(id: number) {
       }),
   );
   button("question-continue", () => {
+    if (reviewing) {
+      const next = questions.find((q) => !progress.answered.includes(q.id));
+      if (next) question(next.id);
+      else {
+        reviewing = false;
+        ending();
+      }
+      return;
+    }
     scene.player.setX(Math.max(scene.player.x, progress.x));
     play();
     notice("Checkpoint saved. A shield is ready for your next bump.");
@@ -267,9 +286,14 @@ function shop() {
 function ending() {
   modal(
     "ending",
-    `<span class="eyebrow">SUNSTONE VALLEY · LEVEL COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You made room for a few new ideas along the way.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.answered.length} / 3</b><span>questions answered</span></div><div><b>${progress.helped.length}</b><span>answered after help</span></div></div><p><strong>Ideas practiced:</strong> scarcity, opportunity cost, and trade-offs.</p><ul class="answer-summary">${questions.map((q) => `<li>${q.concept} · ${progress.helped.includes(q.id) ? "answered after help" : "answered"}</li>`).join("")}</ul><label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p><button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
+    `<span class="eyebrow">SUNSTONE VALLEY · LEVEL COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You finished the New Mexico trail. Choose whether to practice or explore again.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.answered.length} / 3</b><span>questions answered</span></div><div><b>${progress.helped.filter((id) => progress.answered.includes(id)).length}</b><span>answered after help</span></div></div><p><strong>Trail ideas:</strong> scarcity, opportunity cost, and trade-offs. ${progress.answered.length < 3 ? "Practice when you are ready below." : "All three ideas practiced."}</p><ul class="answer-summary">${questions.map((q) => `<li>${q.concept} · ${progress.answered.includes(q.id) ? (progress.helped.includes(q.id) ? "answered after help" : "answered") : "not practiced yet"}</li>`).join("")}</ul><label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p>${progress.answered.length < 3 ? '<button id="review-questions" class="primary">Practice the remaining questions</button>' : ""}<button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
     true,
   );
+  if (progress.answered.length < 3)
+    button("review-questions", () => {
+      reviewing = true;
+      question(questions.find((q) => !progress.answered.includes(q.id))!.id);
+    });
   button("again", confirmNew);
   button("end-home", title);
 }
@@ -277,7 +301,7 @@ function openSettings() {
   previous = screen;
   modal(
     "settings",
-    `<span class="eyebrow">MAKE IT YOURS</span><h2 id="dialog-title">Your kind of adventure.</h2><p>Change these anytime. Your choices stay on this device.</p><div class="settings-grid"><label>Adventure mode<select id="setting-mode"><option value="relaxed">Relaxed · no countdown or game over</option><option value="challenge">Challenge · show elapsed time</option></select></label><label>Running speed<select id="setting-speed"><option value="0.7">Gentle</option><option value="1">Cruising</option><option value="1.3">Quick</option></select></label><label>Sound effects <input id="setting-sound" type="range" min="0" max="1" step="0.1" value="${settings.sound}"></label><label>Music <input id="setting-music" type="range" min="0" max="1" step="0.1" value="${settings.music}"></label><label class="check-label"><input id="setting-reduced" type="checkbox" ${settings.reduced ? "checked" : ""}> Reduced motion<br><small>Immediate camera following; no decorative rotation.</small></label><button id="mute" class="secondary">Mute all audio</button><label>Move left key<select id="setting-left"><option>A</option><option>J</option></select></label><label>Move right key<select id="setting-right"><option>D</option><option>L</option></select></label><label>Jump key<select id="setting-jump"><option value="SPACE">Space</option><option value="K">K</option><option value="W">W</option></select></label><label>Narration speed<select id="setting-speech"><option value="0.7">Slower</option><option value="0.9">Gentle</option><option value="1.1">Faster</option></select></label></div><p class="fine-print">Arrow keys, W, Up, and Space also work. Music and effects can each be set to zero. Challenge time never runs while a menu or question is open.</p><button id="settings-done" class="primary">Save settings & return →</button>`,
+    `<span class="eyebrow">MAKE IT YOURS</span><h2 id="dialog-title">Your kind of adventure.</h2><p>Change these anytime. Your choices stay on this device.</p><div class="settings-grid"><label>Adventure mode<select id="setting-mode"><option value="relaxed">Relaxed · no countdown or game over</option><option value="challenge">Challenge · show elapsed time</option></select></label><label>Running speed<select id="setting-speed"><option value="0.7">Gentle</option><option value="1">Cruising</option><option value="1.3">Quick</option></select></label><label>Sound effects <input id="setting-sound" type="range" min="0" max="1" step="0.1" value="${settings.sound}"></label><label>Music <input id="setting-music" type="range" min="0" max="1" step="0.1" value="${settings.music}"></label><label class="check-label"><input id="setting-loops" type="checkbox" ${settings.loops ? "checked" : ""}> Run the loop tracks<br><small>Turn off to keep running along the ground.</small></label><label class="check-label"><input id="setting-reduced" type="checkbox" ${settings.reduced ? "checked" : ""}> Reduced motion<br><small>Immediate camera following; no decorative rotation.</small></label><button id="mute" class="secondary">Mute all audio</button><label>Move left key<select id="setting-left"><option>A</option><option>J</option></select></label><label>Move right key<select id="setting-right"><option>D</option><option>L</option></select></label><label>Jump key<select id="setting-jump"><option value="SPACE">Space</option><option value="K">K</option><option value="W">W</option></select></label><label>Narration speed<select id="setting-speech"><option value="0.7">Slower</option><option value="0.9">Gentle</option><option value="1.1">Faster</option></select></label></div><p class="fine-print">Arrow keys, W, Up, and Space also work. Music and effects can each be set to zero. Challenge time never runs while a menu or question is open.</p><button id="settings-done" class="primary">Save settings & return →</button>`,
     true,
   );
   const values: Record<string, string> = {
@@ -307,6 +331,7 @@ function openSettings() {
     settings.sound = Number(($("setting-sound") as HTMLInputElement).value);
     settings.music = Number(($("setting-music") as HTMLInputElement).value);
     settings.reduced = ($("setting-reduced") as HTMLInputElement).checked;
+    settings.loops = ($("setting-loops") as HTMLInputElement).checked;
     settings.speechRate = Number(
       ($("setting-speech") as HTMLSelectElement).value,
     );
@@ -343,6 +368,9 @@ button("pause", () => {
   if (screen === "play") pause();
 });
 button("shop-open", shop);
+button("rest-open", () => {
+  if (screen === "play" && nearbyRest !== null) question(nearbyRest);
+});
 document.querySelectorAll<HTMLButtonElement>("[data-hold]").forEach((b) => {
   const key = b.dataset.hold as "left" | "right" | "jump";
   b.onpointerdown = (e) => {
@@ -359,7 +387,10 @@ window.addEventListener("keydown", (e) => {
     if (screen === "play") pause();
     else if (screen === "pause") play();
   }
-  if (e.code === "KeyE" && screen === "play" && !$("shop-open").hidden) shop();
+  if (e.code === "KeyE" && screen === "play") {
+    if (nearbyRest !== null) question(nearbyRest);
+    else if (!$("shop-open").hidden) shop();
+  }
   if (e.key === "Tab" && screen !== "play") {
     const focusable = [
       ...$("overlay").querySelectorAll<HTMLElement>(
@@ -400,7 +431,9 @@ if (new URLSearchParams(location.search).has("test"))
         return screen;
       },
       teleport: (x: number, y = 430) => {
-        scene.player.setPosition(x, y).setVelocity(0, 0);
+        scene.loops.reset();
+        (scene.player.body as Phaser.Physics.Arcade.Body).reset(x, y);
+        scene.player.setVelocity(0, 0);
       },
       shop,
       question,
