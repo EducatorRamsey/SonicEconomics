@@ -215,8 +215,8 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
       .text(x, 425, text, {
         fontFamily: "sans-serif",
         fontSize: "13px",
-        color: "#fff8e3",
-        backgroundColor: "#294c49",
+        color: "#1f2937",
+        backgroundColor: "#e5e7eb",
         padding: { x: 11, y: 7 },
       })
       .setOrigin(0.5);
@@ -316,6 +316,17 @@ export function makeTextures(scene: Phaser.Scene) {
     g.lineBetween(40 + stride, 67, 48 + stride, 67);
     g.lineBetween(56 - stride, 67, 64 - stride, 67);
     g.generateTexture(`bird${frame}`, 92, 72);
+    if (frame === 0) {
+      for (const x of [59, 69]) {
+        g.fillStyle(0xfffcdf);
+        g.fillCircle(x, 16, 5);
+        g.lineStyle(2.5, 0x142e37);
+        g.lineBetween(x - 3, 13, x + 3, 19);
+        g.lineBetween(x + 3, 13, x - 3, 19);
+      }
+      g.generateTexture("bird-dead", 92, 72);
+    }
+
     g.destroy();
   }
   const t = scene.make.graphics({ x: 0, y: 0 });

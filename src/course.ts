@@ -81,15 +81,25 @@ export const obstacles: {
     kind: "boulder" as const,
   })),
 ];
-/** A finite budget: 12 introductory ground coins and 4 optional route coins per stage. */
+/** Compact introductory trails and six-coin crowns following every loop. */
 export const coinPositions = levels.flatMap((level) => [
-  ...[380, 470, 560, 650, 740, 830, 1400, 2500, 3500, 4500, 5800, 7100].map(
-    (x) => ({ x: level.left + x, y: 442 }),
+  ...[380, 1350].flatMap((start) =>
+    Array.from({ length: 7 }, (_, i) => ({
+      x: level.left + start + i * 35,
+      y: 442,
+    })),
   ),
-  ...[11000, 11100, 14600, 14700].map((x) => ({
-    x: level.left + x,
-    y: level.id === 2 ? 265 : 325,
-  })),
+  ...loopTracks
+    .filter((t) => t.x > level.left && t.x < level.right)
+    .flatMap((t) =>
+      Array.from({ length: 6 }, (_, i) => {
+        const angle = Math.PI + (i - 2.5) * 0.2;
+        return {
+          x: t.x + Math.sin(angle) * t.radius,
+          y: t.y + Math.cos(angle) * t.radius,
+        };
+      }),
+    ),
 ]);
 export const ledgesFor = (id: number) => {
   const left = levels[id].left;

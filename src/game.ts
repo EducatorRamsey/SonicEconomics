@@ -10,7 +10,7 @@ import {
   hazardPositions,
   tokenPositions,
 } from "./level";
-import { progress, settings, save } from "./state";
+import { progress, settings, save, wardrobe } from "./state";
 import { cue, music } from "./audio";
 export interface Bridge {
   ready: () => void;
@@ -19,7 +19,8 @@ export interface Bridge {
   finish: () => void;
   hud: () => void;
   nearby: (yes: boolean) => void;
-  notice: (s: string) => void;
+  notice: (s: string, tone?: "neutral" | "urgent") => void;
+  gameOver: () => void;
 }
 export class Desert extends Phaser.Scene {
   player!: Runner;
@@ -70,7 +71,7 @@ export class Desert extends Phaser.Scene {
         p.x < level.right &&
         !progress.collected.includes(i)
       ) {
-        const t = this.tokens.create(p.x, p.y, "token");
+        const t = this.tokens.create(p.x, settings.loops ? p.y : 442, "token");
         t.setData("id", i);
       }
     });
@@ -101,9 +102,9 @@ export class Desert extends Phaser.Scene {
           h.setAlpha(0.7);
           const label = this.add
             .text(o.x, 393, "Gate charging", {
-              fontSize: "12px",
-              color: "#254c49",
-              backgroundColor: "#f6efd8",
+              fontSize: "16px",
+              color: "#1f2937",
+              backgroundColor: "#e5e7eb",
               padding: { x: 5, y: 4 },
             })
             .setOrigin(0.5);
@@ -151,11 +152,16 @@ export class Desert extends Phaser.Scene {
       60,
     );
     this.setPlaying(false);
+    if (progress.over) {
+      this.player.setTexture("bird-dead").setAngle(90);
+      (this.player.body as Phaser.Physics.Arcade.Body).enable = false;
+    }
     if (data.play) this.setPlaying(true);
     this.bridge?.hud();
     this.bridge?.ready();
   }
   setPlaying(active: boolean) {
+    active = active && !progress.over;
     this.activePlay = active;
     if (!this.player) return;
     if (active) {
@@ -178,6 +184,14 @@ export class Desert extends Phaser.Scene {
     save();
     this.bridge.hud();
   }
+  refreshCoins() {
+    this.tokens?.getChildren().forEach((obj) => {
+      const coin = obj as Phaser.Physics.Arcade.Sprite,
+        position = tokenPositions[coin.getData("id")];
+      coin.setPosition(position.x, settings.loops ? position.y : 442);
+      (coin.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+    });
+  }
   reset() {
     this.scene.restart({ play: true });
   }
@@ -187,7 +201,8 @@ export class Desert extends Phaser.Scene {
     this.player.setVelocity(0, 0);
     this.invulnerable = 2.5;
     this.bridge.notice(
-      "Back at your safe checkpoint. Your tokens and answers are saved.",
+      "Back at your safe checkpoint. Watch your remaining hearts.",
+      "urgent",
     );
     save();
   }
@@ -198,6 +213,8 @@ export class Desert extends Phaser.Scene {
     )
       return;
     progress.level++;
+    if (wardrobe.includes(1)) progress.shield++;
+    if (progress.level === 2 && wardrobe.includes(2)) progress.jets += 4;
     progress.boost = 0;
     progress.magnet = 0;
     progress.boots = 0;
@@ -214,19 +231,60 @@ export class Desert extends Phaser.Scene {
     cue("hit");
     if (progress.shield > 0) {
       progress.shield--;
-      this.bridge.notice("Your shield protected a heart.");
+      this.bridge.notice("Hit! Your shield protected a heart.", "urgent");
     } else {
       progress.hearts--;
       this.bridge.notice(
-        "A bump! One heart used. You have a moment of protection.",
+        "Hit! One heart lost. You have a moment of protection.",
+        "urgent",
       );
       if (progress.hearts <= 0) {
-        progress.hearts = 3;
-        this.recover();
+        this.die();
       }
     }
     save();
     this.bridge.hud();
+  }
+  private die() {
+    if (progress.over) return;
+    progress.over = true;
+    progress.hearts = 0;
+    this.loops.reset();
+    this.setPlaying(false);
+    (this.player.body as Phaser.Physics.Arcade.Body).enable = false;
+    this.player
+      .setTexture("bird-dead")
+      .setAlpha(1)
+      .setAcceleration(0)
+      .setVelocity(0);
+    if (this.player.y > 540) this.player.setY(468);
+    cue("gameover");
+    this.tweens.add({
+      targets: this.player,
+      angle: 90,
+      y: 454,
+      duration: settings.reduced ? 0 : 650,
+      ease: "Sine.easeIn",
+    });
+    this.bridge.nearby(false);
+    this.bridge.notice("Game over — all three hearts are gone.", "urgent");
+    save();
+    this.bridge.hud();
+    this.bridge.gameOver();
+  }
+  private fall() {
+    progress.hearts = Math.max(0, progress.hearts - 1);
+    cue("hit");
+    if (!progress.hearts) this.die();
+    else {
+      this.recover();
+      this.bridge.notice(
+        "Fell! One heart lost. Back at your safe checkpoint.",
+        "urgent",
+      );
+      this.bridge.hud();
+      save();
+    }
   }
   update(_time: number, delta: number) {
     if (!this.player) return;
@@ -246,7 +304,7 @@ export class Desert extends Phaser.Scene {
             this.player.y,
             token.x,
             token.y,
-          ) < 240
+          ) < 340
         )
           this.collect(token);
       }
@@ -301,7 +359,10 @@ export class Desert extends Phaser.Scene {
       else if (p.x < p.getData("mid") - 65) b.setVelocityX(65);
       return true;
     });
-    if (this.player.y > 640) this.recover();
+    if (this.player.y > 640) {
+      this.fall();
+      return;
+    }
     const level = levels[progress.level];
     if (!this.stageCheckpoint && this.player.x >= level.safe) {
       this.stageCheckpoint = true;

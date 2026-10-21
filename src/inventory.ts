@@ -10,7 +10,7 @@ export const inventories = [
       id: "shield",
       name: "Trail shield",
       icon: "◌",
-      price: 10,
+      price: 26,
       description:
         "Absorbs three hazard hits. Useful on the longer ground route; unused shields carry onward.",
     },
@@ -18,7 +18,7 @@ export const inventories = [
       id: "boost",
       name: "Spring step",
       icon: "↑",
-      price: 9,
+      price: 25,
       description:
         "Higher jumps for the rest of this stage. Reach the high route directly instead of climbing the lower steps.",
     },
@@ -28,15 +28,15 @@ export const inventories = [
       id: "magnet",
       name: "Coin magnet",
       icon: "⌁",
-      price: 13,
+      price: 38,
       description:
-        "Collects coins within 240 pixels for the rest of this stage. Reach elevated coins from the safe ground route.",
+        "Collects coins within 340 pixels for the rest of this stage. Collect loop-crown coins from the ground route.",
     },
     {
       id: "boots",
       name: "Speed boots",
       icon: "»",
-      price: 14,
+      price: 37,
       description:
         "Run 25% faster for the rest of this stage. Clear elevated route gaps more easily; assisted loops keep their safe speed.",
     },
@@ -46,7 +46,7 @@ export const inventories = [
       id: "armor",
       name: "Meteor armor",
       icon: "◇",
-      price: 18,
+      price: 50,
       description:
         "Adds five shields against meteorites and energy gates. Stays until used.",
     },
@@ -54,7 +54,7 @@ export const inventories = [
       id: "jets",
       name: "Lunar jump jets",
       icon: "⇧",
-      price: 17,
+      price: 49,
       description:
         "Eight midair boosts. Release Jump, then press it again in the air to use one.",
     },

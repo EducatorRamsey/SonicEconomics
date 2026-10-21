@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { settings, progress, save } from "./state";
+import { settings, progress, save, wardrobe } from "./state";
 import { cue } from "./audio";
 export class Runner extends Phaser.Physics.Arcade.Sprite {
+  private outfit!: Phaser.GameObjects.Graphics;
   held = { left: false, right: false, jump: false };
   private wasJump = false;
   private lastGround = 0;
@@ -15,6 +16,8 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
       .setOffset(37, 15)
       .setCollideWorldBounds(true)
       .setMaxVelocity(480, 900);
+    this.outfit = scene.add.graphics().setDepth(9);
+    this.once("destroy", () => this.outfit?.destroy());
     this.bind();
   }
   bind() {
@@ -46,7 +49,10 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
     this.setAccelerationX(axis * (reversing ? 2100 : 1100));
     this.setDragX(420);
     this.setMaxVelocity(
-      600 * settings.speed * (outdoor && progress.boots > 0 ? 1.25 : 1),
+      600 *
+        settings.speed *
+        (outdoor && progress.boots > 0 ? 1.25 : 1) *
+        (outdoor && wardrobe.includes(0) ? 1.1 : 1),
       900,
     );
     if (axis) this.setFlipX(axis < 0);
@@ -73,6 +79,46 @@ export class Runner extends Phaser.Physics.Arcade.Sprite {
         ? `bird${1 + (Math.floor(time / 110) % 2)}`
         : "bird0",
     );
+  }
+  preUpdate(time: number, delta: number) {
+    super.preUpdate(time, delta);
+    if (!this.outfit) return;
+    const g = this.outfit;
+    g.clear();
+    g.setPosition(this.x, this.y)
+      .setRotation(this.rotation)
+      .setScale(this.flipX ? -1 : 1, 1)
+      .setAlpha(this.alpha);
+    if (wardrobe.includes(0)) {
+      const stride =
+        this.texture.key === "bird1"
+          ? 10
+          : this.texture.key === "bird2"
+            ? -9
+            : 0;
+      g.fillStyle(0xc74636);
+      g.fillRoundedRect(-13 + stride, 25, 18, 9, 3);
+      g.fillRoundedRect(4 - stride, 25, 18, 9, 3);
+      g.lineStyle(2, 0xfff5df);
+      g.lineBetween(-13 + stride, 33, 5 + stride, 33);
+      g.lineBetween(4 - stride, 33, 22 - stride, 33);
+    }
+    if (
+      wardrobe.includes(1) &&
+      !(wardrobe.includes(2) && progress.level === 2)
+    ) {
+      g.fillStyle(0xe5b94f);
+      g.fillRoundedRect(9, -47, 23, 14, 5);
+      g.fillStyle(0xad752d);
+      g.fillRoundedRect(3, -35, 34, 5, 2);
+    }
+    if (wardrobe.includes(2) && progress.level === 2) {
+      g.fillStyle(0x9de3ff, 0.12);
+      g.fillCircle(17, -18, 24);
+      g.lineStyle(3, 0xc8eaff);
+      g.strokeCircle(17, -18, 24);
+      g.lineBetween(7, -34, 16, -37);
+    }
   }
   controls() {
     const left = this.held.left || this.keys.left.isDown || this.keys.a.isDown;

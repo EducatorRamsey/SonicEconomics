@@ -9,13 +9,14 @@ test("finite coins force a choice; purchased stock stays sold out and spring gea
   for (const level of levels)
     expect(
       coinPositions.filter((p) => p.x >= level.left && p.x < level.right),
-    ).toHaveLength(16);
-  for (const c of coinPositions.slice(0, 12)) await teleport(page, c.x);
-  expect((await state(page)).tokens).toBe(12);
+    ).toHaveLength(50);
+  for (const c of coinPositions.filter((c) => c.x < levels[0].shop))
+    await teleport(page, c.x, c.y);
+  expect((await state(page)).tokens).toBe(26);
   await enterStore(page);
   await page.locator("#store-browse").click();
   await page.locator("#buy-boost").click();
-  expect((await state(page)).tokens).toBe(3);
+  expect((await state(page)).tokens).toBe(1);
   await expect(page.locator("#buy-boost")).toBeDisabled();
   await expect(page.locator("#buy-boost")).toContainText("Sold out");
   await expect(page.locator("#buy-shield")).toBeDisabled();
@@ -30,7 +31,7 @@ test("finite coins force a choice; purchased stock stays sold out and spring gea
     .toBeLessThan(y - 125);
   await page.reload();
   await page.locator("#continue-save").click();
-  expect((await state(page)).tokens).toBe(3);
+  expect((await state(page)).tokens).toBe(1);
   await enterStore(page);
   await page.locator("#store-browse").click();
   await expect(page.locator("#buy-boost")).toBeDisabled();

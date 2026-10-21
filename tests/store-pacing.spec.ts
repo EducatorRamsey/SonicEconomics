@@ -15,7 +15,7 @@ test("meet the tumbleweed and earn currency before reaching the first store", as
   await expect(page.locator("#shop-open")).toBeVisible({ timeout: 20000 });
   await page.keyboard.press("e");
   await page.keyboard.up("ArrowRight");
-  expect((await state(page)).tokens).toBeGreaterThanOrEqual(10);
+  expect((await state(page)).tokens).toBeGreaterThanOrEqual(26);
   await expect(page.locator("#store-controls")).toBeVisible();
   await page.locator("#store-browse").click();
   await expect(page.locator("#buy-shield")).toBeEnabled();

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { answer } from "./helpers";
 import { levels } from "../src/course";
 for (const fallback of [false, true]) {
   test(`fullscreen ${fallback ? "page fallback" : "browser mode"} keeps controls, questions, and exit usable`, async ({
@@ -55,12 +56,8 @@ for (const fallback of [false, true]) {
       levels[0].end + 100,
     );
 
-    await expect(page.locator("#dialog-title")).toHaveText(
-      "A little water, many gardens",
-    );
-    await page.locator('[data-answer="0"]').click();
-    await page.locator("#question-continue").click();
-    await page.locator("#next-level").click();
+    await expect(page.locator("[data-answer]")).toHaveCount(3);
+    await answer(page, 0);
     await page.locator("#fullscreen").click();
     await expect(shell).not.toHaveClass(/is-expanded/);
     await page.keyboard.press("f");

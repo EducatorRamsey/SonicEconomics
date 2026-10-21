@@ -1,3 +1,4 @@
+import type { QuizAttempt } from "./questions";
 import { levels } from "./course";
 export interface Settings {
   loops: boolean;
@@ -13,6 +14,9 @@ export interface Settings {
 }
 export interface Progress {
   campaign: number;
+  over: boolean;
+  attempt: QuizAttempt | null;
+  scores: number[];
   pendingGate: number | null;
   level: number;
   completedLevels: number[];
@@ -43,15 +47,22 @@ export const defaults: Settings = {
   right: "D",
   jump: "SPACE",
 };
+const storedPrizes = read("rr-prizes");
+export const wardrobe: number[] = Array.isArray(storedPrizes)
+  ? storedPrizes.filter((id) => [0, 1, 2].includes(id))
+  : [];
 const fresh = (): Progress => ({
-  campaign: 5,
+  campaign: 6,
+  over: false,
+  attempt: null,
+  scores: [0, 0, 0],
   level: 0,
   completedLevels: [],
   pendingGate: null,
   x: 180,
   tokens: 0,
   hearts: 3,
-  shield: 0,
+  shield: wardrobe.includes(1) ? 1 : 0,
   boost: 0,
   magnet: 0,
   boots: 0,
@@ -87,7 +98,7 @@ export let progress: Progress =
     : fresh();
 // Old wallets would bypass the new scarcity balance. Keep a local backup and
 // start the longer campaign fresh; comfort settings are independent.
-if (raw && raw.campaign !== 5) {
+if (raw && raw.campaign !== 6) {
   try {
     localStorage.setItem("rr-previous-campaign", JSON.stringify(raw));
   } catch {}
@@ -105,6 +116,7 @@ export function save() {
   try {
     localStorage.setItem("rr-settings", JSON.stringify(settings));
     localStorage.setItem("rr-progress", JSON.stringify(progress));
+    localStorage.setItem("rr-prizes", JSON.stringify(wardrobe));
   } catch {
     storageAvailable = false;
   }
@@ -120,4 +132,13 @@ export function newGame() {
   progress = fresh();
   save();
   return progress;
+}
+
+export function awardPrize(id: number) {
+  if (wardrobe.includes(id)) return false;
+  wardrobe.push(id);
+  if (id === 1) progress.shield++;
+  if (id === 2) progress.jets += 4;
+  save();
+  return true;
 }

@@ -39,24 +39,25 @@ test("destinations replace scenery, collectibles, gravity and store equipment; r
   expect((await world()).labels.join(" ")).toContain("AUSTIN LAUNCH WORKS");
   expect((await world()).labels.join(" ")).not.toContain("ALBUQUERQUE");
   await page.evaluate(() => {
-    (window as any).rr.progress.tokens = 50;
+    (window as any).rr.progress.tokens = 100;
   });
   await enterStore(page);
   await page.locator("#store-browse").click();
   await expect(page.locator("#buy-shield")).toHaveCount(0);
   await page.locator("#buy-magnet").click();
   await page.locator("#buy-boots").click();
-  expect((await state(page)).tokens).toBe(23);
+  expect((await state(page)).tokens).toBe(25);
   const paused = (await state(page)).magnet;
   await page.waitForTimeout(300);
   expect((await state(page)).magnet).toBe(paused);
   await page.locator("#leave-shop").click();
   await page.locator("#store-exit").click();
   const coins = (await state(page)).tokens;
-  await teleport(page, levels[1].left + 11000, 300);
+  await teleport(page, levels[1].left + 12600, 430);
   await expect
     .poll(async () => (await state(page)).tokens)
     .toBeGreaterThan(coins);
+  await teleport(page, levels[1].left + 13000);
   await page.keyboard.down("ArrowRight");
   await expect
     .poll(() =>

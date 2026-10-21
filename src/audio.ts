@@ -27,7 +27,13 @@ function tone(
     /* audio is optional */
   }
 }
-export function cue(kind: "token" | "jump" | "reward" | "hit") {
+export function cue(kind: "token" | "jump" | "reward" | "hit" | "gameover") {
+  if (kind === "gameover") {
+    [330, 247, 165].forEach((f, i) =>
+      setTimeout(() => tone(f, 0.35, settings.sound, "triangle"), i * 220),
+    );
+    return;
+  }
   const f = { token: 660, jump: 330, reward: 880, hit: 165 }[kind];
   tone(f, 0.18, settings.sound);
 }

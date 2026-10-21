@@ -505,7 +505,7 @@ kbd {
 }
 .question-prompt {
   color: #294c44;
-  font-size: 16px !important;
+  font-size: 20px;
 }
 .narration {
   display: flex;
@@ -721,7 +721,7 @@ kbd {
     margin: 8px 0 12px;
   }
   .question-prompt {
-    font-size: 14px !important;
+    font-size: 18px;
   }
   .answer {
     font-size: 12px;
@@ -874,7 +874,7 @@ kbd {
     font-size: 11px;
   }
   .question-prompt {
-    font-size: 13px !important;
+    font-size: 18px;
   }
   .question-footer .primary {
     font-size: 11px;
@@ -1160,4 +1160,172 @@ body.game-expanded {
     animation: none;
     left: 45%;
   }
+}
+
+/* Student-facing messages use neutral gray; damage gets an urgent accent. */
+.panel {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+#notice {
+  background: #e5e7eb;
+  color: #1f2937;
+  border: 2px solid #9ca3af;
+  font-size: 17px;
+}
+#notice[data-tone="urgent"] {
+  background: #fde5dd;
+  color: #7f251a;
+  border-color: #b83d29;
+  font-weight: 700;
+}
+#feedback,
+#feedback.correct {
+  background: #e5e7eb;
+  color: #1f2937;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 18px;
+}
+#feedback.hint {
+  background: #fff0cb;
+  color: #6b4006;
+}
+.modal-shade {
+  background: #11182780;
+}
+.eyebrow {
+  font-size: 14px;
+}
+.edition {
+  font-size: 14px;
+}
+.title-panel .eyebrow {
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+.title-panel .lead {
+  font-size: 22px;
+}
+.title-panel .gentle-label {
+  font-size: 17px;
+  line-height: 1.5;
+}
+.title-actions .text-btn,
+.game-shell.is-expanded .title-actions .text-btn {
+  font-size: 18px;
+}
+.title-actions .primary,
+.title-actions .secondary {
+  font-size: 19px;
+}
+.prize-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #e5e7eb;
+  border: 2px solid #b3bac5;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 12px 0;
+}
+.prize-preview.earned {
+  border-color: #567a9d;
+}
+.prize-art {
+  flex: 0 0 80px;
+}
+.prize-art svg {
+  width: 80px;
+  height: 60px;
+  display: block;
+}
+.prize-preview strong {
+  font-size: 20px;
+}
+.prize-preview p,
+.panel .prize-preview p {
+  font-size: 17px;
+  margin: 5px 0 0;
+  line-height: 1.45;
+}
+.prize-goal,
+.collection-status {
+  font-size: 18px;
+}
+.time-badge,
+.next-level-card {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.panel .question-prompt {
+  font-size: 20px;
+}
+.narration,
+.small-btn,
+.narration label {
+  font-size: 16px;
+}
+@media (max-width: 600px) {
+  .title-panel .eyebrow {
+    font-size: 14px;
+  }
+  .prize-preview {
+    gap: 9px;
+    padding: 9px;
+  }
+  .prize-art {
+    flex-basis: 62px;
+  }
+  .prize-art svg {
+    width: 62px;
+  }
+}
+
+.title-actions .text-btn {
+  flex-basis: auto;
+}
+.panel p {
+  font-size: 18px;
+  line-height: 1.5;
+}
+.answer {
+  font-size: 18px;
+  padding: 12px;
+  min-height: 48px;
+}
+.panel .primary,
+.panel .secondary,
+.panel .text-btn {
+  font-size: 17px;
+}
+.title-panel .title-actions button {
+  font-size: 18px;
+}
+.page-intro .eyebrow,
+.privacy-note,
+.save-note,
+.below-game p {
+  font-size: 14px;
+}
+.title-shade {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #f3f4f6f5 31%,
+    #f3f4f680 53%,
+    transparent 71%
+  );
+}
+
+.panel[tabindex="-1"]:focus {
+  outline: none;
+}
+.time-badge {
+  font-size: 15px;
+}
+
+#notice:empty {
+  display: none;
 }

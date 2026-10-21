@@ -33,7 +33,17 @@ export async function visitGate(page: Page, id: number) {
   expect((await state(page)).screen).toBe("question");
 }
 export async function answer(page: Page, id: number, advance = true) {
-  await page.locator(`[data-answer="${[0, 1, 1][id]}"]`).click();
+  while ((await state(page)).screen === "question") {
+    const saved = await page.evaluate(() => {
+      const r = (window as any).rr,
+        a = r.progress.attempt;
+      return { choice: r.quizAnswer, answered: a.answers[a.cursor] !== null };
+    });
+    if (!saved.answered)
+      await page.locator(`[data-answer="${saved.choice}"]`).click();
+    await page.locator("#question-continue").click();
+  }
+  await expect(page.locator("#dialog-title")).toHaveText("Three out of three!");
   await page.locator("#question-continue").click();
   if (id < 2 && advance) {
     await page.locator("#next-level").click();

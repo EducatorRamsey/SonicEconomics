@@ -11,9 +11,11 @@ import {
   saveSettings,
   hasSave,
   storageAvailable,
+  wardrobe,
+  awardPrize,
 } from "./state";
-import { questions } from "./questions";
-import { answerQuestion } from "./economics";
+import { prizes, prizeArt } from "./prizes";
+import { questions, makeAttempt, score } from "./questions";
 import { checkpoints, levels } from "./course";
 import { music, narrate, stopSpeech, cue } from "./audio";
 import "./style.css";
@@ -22,7 +24,7 @@ app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-lab
 <main><div class="page-intro"><div><span class="eyebrow">FROM THE SOUTHWEST TO SPACE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
 <section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> ROAD TO THE MOON <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling Earth-to-Moon platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Enter store · E</button><div id="store-controls" role="region" aria-label="Store controls" hidden><span>SUNSTONE SUPPLY · Walk with ← → · E at the counter or door</span><button id="store-browse" class="secondary">Browse upgrades</button><button id="store-exit" class="primary">Leave store</button></div><div id="overlay"></div></div>
 <div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
-<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. One economics checkpoint at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Moonbound v5 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
+<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. A three-question prize challenge at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Roadrunner Rush v6 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const scene = new Desert();
@@ -56,8 +58,11 @@ function hud() {
     settings.mode === "relaxed"
       ? "◉ Relaxed adventure"
       : "◷ Challenge · elapsed time";
-  questions.forEach((_, i) =>
-    $("gate-" + i).classList.toggle("done", progress.answered.includes(i)),
+  levels.forEach((_, i) =>
+    $("gate-" + i).classList.toggle(
+      "done",
+      progress.completedLevels.includes(i),
+    ),
   );
   $("area").textContent =
     `Level ${progress.level + 1}/3 · ${levels[progress.level].name}`;
@@ -65,7 +70,13 @@ function hud() {
     $("save-note").textContent =
       "Storage is unavailable. You can play, but progress will not persist after closing.";
 }
-function notice(message: string) {
+function notice(message: string, tone: "neutral" | "urgent" = "neutral") {
+  $("notice").dataset.tone = tone;
+  $("notice").setAttribute("role", tone === "urgent" ? "alert" : "status");
+  $("notice").setAttribute(
+    "aria-live",
+    tone === "urgent" ? "assertive" : "polite",
+  );
   $("notice").textContent = message;
   clearTimeout(noticeTimer);
   noticeTimer = setTimeout(() => ($("notice").textContent = ""), 6500);
@@ -81,12 +92,14 @@ scene.connect({
   ready: () => {
     if (!engineReady) {
       engineReady = true;
-      title();
+      if (progress.over) gameOverDialog();
+      else title();
       hud();
     }
   },
   question: question,
   finish: ending,
+  gameOver,
   hud,
   nearby: (yes) => {
     $("shop-open").hidden = !yes;
@@ -125,10 +138,18 @@ function modal(kind: string, html: string, wide = false) {
   $("overlay").hidden = false;
   scene.input?.keyboard?.disableGlobalCapture();
   requestAnimationFrame(() => {
-    $("overlay").querySelector<HTMLElement>("button, input, select")?.focus();
+    const dialog = $("overlay").querySelector<HTMLElement>('[role="dialog"]');
+    if (dialog) {
+      dialog.tabIndex = -1;
+      dialog.focus({ preventScroll: true });
+    }
   });
 }
 function play() {
+  if (progress.over) {
+    gameOverDialog();
+    return;
+  }
   $("canvas").setAttribute(
     "aria-label",
     `Level ${progress.level + 1}: ${levels[progress.level].name}. Move with arrows or your selected keys; Space to jump.`,
@@ -147,15 +168,17 @@ function button(id: string, fn: () => void) {
   $(id).addEventListener("click", fn);
 }
 function title() {
+  clearTimeout(noticeTimer);
+  $("notice").textContent = "";
   modal(
     "title",
-    `<div class="eyebrow">ALBUQUERQUE → AUSTIN → THE MOON</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">A wide-open trail.<br>A little curiosity. Your next adventure.</p><p class="title-detail">Three longer worlds, six loops per stage, and only 16 coins per destination. Buy equipment now or save for the next shop.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Adjust your experience</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div><div class="gentle-label">♡ No countdown. No game over. Just keep exploring.</div>`,
+    `<div class="eyebrow">ALBUQUERQUE → AUSTIN → THE MOON</div><h2 id="dialog-title">Roadrunner<br><em>Rush.</em></h2><p class="lead">Run. Leap. Explore.</p><div class="title-actions"><button class="primary" id="start">${hasSave() ? "New game" : "Let’s hit the trail"} <span>→</span></button>${hasSave() && !progress.over ? '<button class="secondary" id="continue-save">Continue adventure</button>' : ""}<button class="text-btn" id="title-settings">Settings</button><button class="text-btn" id="title-prizes">Your prizes</button><button class="text-btn" id="title-fullscreen">Play in full screen</button></div>`,
   );
   button("start", () => {
-    if (hasSave()) confirmNew();
+    if (hasSave() && !progress.over) confirmNew();
     else begin();
   });
-  if (hasSave())
+  if (hasSave() && !progress.over)
     button("continue-save", () => {
       if (progress.finished) ending();
       else if (progress.completedLevels.includes(progress.level))
@@ -164,6 +187,7 @@ function title() {
       else play();
     });
   button("title-settings", openSettings);
+  button("title-prizes", collection);
   button("title-fullscreen", () => void toggleFullscreen());
 }
 function begin() {
@@ -173,14 +197,14 @@ function begin() {
   scene.reset();
   play();
   notice(
-    "Level 1 · Albuquerque. Try the loops and tumbleweeds before the store. Just 16 coins: choose equipment or save. One question waits at the finish.",
+    "Run the loops and reach the prize challenge. Watch your three hearts!",
   );
 }
 function confirmNew() {
   const back = screen;
   modal(
     "confirm",
-    `<span class="eyebrow">A FRESH TRAIL</span><h2 id="dialog-title">Start a new adventure?</h2><p>This resets tokens, answers, and checkpoint progress. Your comfort settings stay the same.</p><button id="confirm-new" class="primary">Start new game</button><button id="cancel-new" class="secondary">Keep my adventure</button>`,
+    `<span class="eyebrow">A FRESH TRAIL</span><h2 id="dialog-title">Start a new adventure?</h2><p>Start again in Albuquerque with three hearts and an empty wallet. Your prizes and settings stay.</p><button id="confirm-new" class="primary">Start new game</button><button id="cancel-new" class="secondary">Keep my adventure</button>`,
   );
   button("confirm-new", begin);
   button("cancel-new", () =>
@@ -194,6 +218,11 @@ function confirmNew() {
   );
 }
 function pause() {
+  if (screen === "dying") return;
+  if (progress.over) {
+    gameOverDialog();
+    return;
+  }
   if (screen === "question") return;
   modal(
     "pause",
@@ -208,80 +237,132 @@ function pause() {
   });
 }
 let currentQuestion = -1;
-function question(id: number) {
-  currentQuestion = id;
-  const q = questions[id];
+function prizePreview(id: number, earned = false) {
+  const prize = prizes[id];
+  return `<div class="prize-preview ${earned ? "earned" : ""}"><span class="prize-art">${prizeArt(id)}</span><div><strong>${prize.name}</strong><p>${prize.description}</p></div></div>`;
+}
+function question(level: number) {
+  currentQuestion = level;
+  if (!progress.attempt || progress.attempt.level !== level)
+    progress.attempt = makeAttempt(level);
+  const attempt = progress.attempt;
+  save();
+  if (attempt.cursor >= 3) {
+    quizResult();
+    return;
+  }
+  const index = attempt.cursor,
+    q = questions[attempt.ids[index]],
+    selected = attempt.answers[index];
   modal(
     "question",
-    `<div class="question-top"><span class="eyebrow">LEVEL ${id + 1} COMPLETE · CHECKPOINT · ${q.concept}</span><span class="time-badge">No time limit</span></div><h2 id="dialog-title">${q.title}</h2><p class="question-prompt">${q.prompt}</p><div class="narration"><button id="listen" class="small-btn">▷ Listen</button><button id="replay" class="small-btn">↻ Replay</button><button id="stop-speech" class="small-btn">■ Stop</button><label>Voice speed <select id="voice-speed"><option value="0.7">Slower</option><option value="0.9">Gentle</option><option value="1.1">Faster</option></select></label></div><div class="answers">${q.answers.map((a, i) => `<button class="answer" data-answer="${i}"><span>${String.fromCharCode(65 + i)}</span>${a}</button>`).join("")}</div><div id="feedback" role="status" aria-live="polite">Choose an answer. You can try as many times as you like.</div><div class="question-footer"><button id="question-settings" class="text-btn">Settings</button><button id="question-continue" class="primary" disabled>Continue along the trail →</button></div>`,
+    `<div class="question-top"><span class="eyebrow">${levels[level].name} · Question ${index + 1} of 3</span><span class="time-badge">No time limit</span></div>${prizePreview(level, wardrobe.includes(level))}<p class="prize-goal">Get all three right in one try to win this prize.</p><h2 id="dialog-title">${q.title}</h2><p class="question-prompt">${q.prompt}</p><div class="narration"><button id="listen" class="small-btn">▷ Listen</button><button id="replay" class="small-btn">↻ Replay</button><button id="stop-speech" class="small-btn">■ Stop</button><label>Voice speed <select id="voice-speed"><option value="0.7">Slower</option><option value="0.9">Gentle</option><option value="1.1">Faster</option></select></label></div><div class="answers">${attempt.orders[index].map((original, i) => `<button class="answer" data-answer="${original}"><span>${String.fromCharCode(65 + i)}</span>${q.answers[original]}</button>`).join("")}</div><div id="feedback" role="status">Choose your answer. You can try a new set after all three questions.</div><div class="question-footer"><button id="question-settings" class="text-btn">Settings</button><button id="question-continue" class="primary" disabled>${index < 2 ? "Next question →" : "See your result →"}</button></div>`,
     true,
   );
-  const text = `${q.title}. ${q.prompt}. ${q.answers.map((a, i) => `Answer ${String.fromCharCode(65 + i)}. ${a}`).join(". ")}`;
-  button("listen", () => narrate(text));
-  button("replay", () => narrate(text));
+  const spoken = `${q.title}. ${q.prompt}. ${attempt.orders[index].map((answer, i) => `Answer ${String.fromCharCode(65 + i)}. ${q.answers[answer]}`).join(". ")}`;
+  button("listen", () => narrate(spoken));
+  button("replay", () => narrate(spoken));
   button("stop-speech", stopSpeech);
   ($("voice-speed") as HTMLSelectElement).value = String(settings.speechRate);
   $("voice-speed").addEventListener("change", () => {
     settings.speechRate = Number(($("voice-speed") as HTMLSelectElement).value);
     saveSettings();
   });
-  if (!("speechSynthesis" in window)) {
+  if (!("speechSynthesis" in window))
     ["listen", "replay", "stop-speech"].forEach(
       (id) => (($(id) as HTMLButtonElement).disabled = true),
     );
+  const feedback = () => {
+    const correct = attempt.answers[index] === q.correct;
     $("feedback").textContent =
-      "Browser narration is unavailable. All question text is shown above.";
-  }
+      `${correct ? "Correct!" : "Not quite."} ${q.explanation}`;
+    $("feedback").className = correct ? "correct" : "hint";
+    document
+      .querySelectorAll<HTMLButtonElement>("[data-answer]")
+      .forEach((b) => (b.disabled = true));
+    ($("question-continue") as HTMLButtonElement).disabled = false;
+  };
   document.querySelectorAll<HTMLButtonElement>("[data-answer]").forEach(
     (b) =>
       (b.onclick = () => {
-        const outcome = answerQuestion(
-          progress,
-          id,
-          Number(b.dataset.answer),
-          checkpoints[id].x - 90,
-        );
-        if (outcome === "already") return;
+        if (attempt.answers[index] !== null) return;
+        const chosen = Number(b.dataset.answer);
+        attempt.answers[index] = chosen;
+        const list = chosen === q.correct ? progress.answered : progress.helped;
+        if (!list.includes(q.id)) list.push(q.id);
         save();
-        if (outcome === "correct") {
-          cue("reward");
-          $("feedback").textContent =
-            `That’s it! ${q.explanation} Bonus: one shield added.`;
-          $("feedback").className = "correct";
-          document
-            .querySelectorAll<HTMLButtonElement>("[data-answer]")
-            .forEach((a) => (a.disabled = true));
-          ($("question-continue") as HTMLButtonElement).disabled = false;
-          $("question-continue").focus();
-          hud();
-        } else {
-          $("feedback").textContent =
-            `Let’s look again. ${q.explanation} Try another answer.`;
-          $("feedback").className = "hint";
-        }
+        feedback();
+        $("question-continue").focus();
       }),
   );
+  if (selected !== null) feedback();
   button("question-continue", () => {
-    if (!progress.answered.includes(id)) return;
-    if (!progress.completedLevels.includes(id))
-      progress.completedLevels.push(id);
-    progress.pendingGate = null;
+    if (attempt.answers[index] === null) return;
+    attempt.cursor++;
     save();
-    if (id === 2) {
+    question(level);
+  });
+  button("question-settings", openSettings);
+}
+function quizResult() {
+  const attempt = progress.attempt!;
+  const level = attempt.level,
+    points = score(attempt);
+  progress.scores[level] = Math.max(progress.scores[level], points);
+  const newlyWon = points === 3 ? awardPrize(level) : false;
+  save();
+  hud();
+  if (newlyWon) cue("reward");
+  modal(
+    "quiz-result",
+    `<span class="eyebrow">${levels[level].name} · Quiz result</span><h2 id="dialog-title">${points === 3 ? "Three out of three!" : `${points} out of three`}</h2>${prizePreview(level, wardrobe.includes(level))}<p>${points === 3 ? `${newlyWon ? "You won" : "You already own"} the ${prizes[level].name}. Your roadrunner wears earned prizes automatically.` : "Try a new set of three questions to win the prize, or continue without winning it this time."}</p>${points < 3 ? '<button id="quiz-retry" class="primary">Try again for the prize</button>' : ""}<button id="question-continue" class="${points === 3 ? "primary" : "secondary"}">${points === 3 ? "Continue adventure →" : "Continue without the prize →"}</button><button id="result-settings" class="text-btn">Settings</button>`,
+    true,
+  );
+  if (points < 3)
+    button("quiz-retry", () => {
+      progress.attempt = makeAttempt(level, attempt.ids);
+      save();
+      question(level);
+    });
+  button("question-continue", () => {
+    if (!progress.completedLevels.includes(level))
+      progress.completedLevels.push(level);
+    progress.pendingGate = null;
+    progress.attempt = null;
+    save();
+    if (level === 2) {
       progress.finished = true;
       save();
       ending();
     } else levelComplete();
   });
-  if (progress.answered.includes(id)) {
-    document
-      .querySelectorAll<HTMLButtonElement>("[data-answer]")
-      .forEach((b) => (b.disabled = true));
-    ($("question-continue") as HTMLButtonElement).disabled = false;
-    $("feedback").textContent =
-      "Answer saved. Your shield reward is already added. Continue when you are ready.";
-  }
-  button("question-settings", openSettings);
+  button("result-settings", openSettings);
+}
+function collection() {
+  modal(
+    "collection",
+    `<span class="eyebrow">YOUR PRIZES</span><h2 id="dialog-title">Dress for adventure.</h2><p>Win a stage’s three-question challenge to earn its prize. Your collection stays with you when you start again.</p>${prizes.map((p) => `${prizePreview(p.id, wardrobe.includes(p.id))}<p class="collection-status">${wardrobe.includes(p.id) ? "✓ Earned and equipped" : "Not earned yet"}</p>`).join("")}<button id="collection-back" class="primary">Back to title</button>`,
+    true,
+  );
+  button("collection-back", title);
+}
+function gameOver() {
+  screen = "dying";
+  $("overlay").hidden = true;
+  $("overlay").innerHTML = "";
+  $("shop-open").hidden = true;
+  setTimeout(() => {
+    if (progress.over && screen === "dying") gameOverDialog();
+  }, 950);
+}
+function gameOverDialog() {
+  modal(
+    "gameover",
+    `<span class="eyebrow">ALL THREE HEARTS LOST</span><h2 id="dialog-title">Game over</h2><p>You must start again in Albuquerque. Your earned prizes and settings stay with you.</p><button id="start-again" class="primary">Start again</button><button id="gameover-title" class="secondary">Back to title</button><button id="gameover-settings" class="text-btn">Settings</button>`,
+  );
+  button("start-again", begin);
+  button("gameover-title", title);
+  button("gameover-settings", openSettings);
 }
 function shop() {
   if (screen !== "play") return;
@@ -337,7 +418,7 @@ function levelComplete() {
   const next = levels[progress.level + 1];
   modal(
     "level-complete",
-    `<span class="eyebrow">LEVEL ${progress.level + 1} OF 3 COMPLETE</span><h2 id="dialog-title">${levels[progress.level].name} complete.</h2><p>Your answer, tokens, and upgrades are saved.</p><div class="next-level-card"><h3>Next: ${next.name}</h3><p>${next.description}</p><p>Three hearts for the next trail. Your tokens and upgrades come with you.</p></div><button id="next-level" class="primary">${progress.level === 1 ? "Board the rocket →" : "Travel to Austin →"}</button><button id="level-settings" class="secondary">Settings</button>`,
+    `<span class="eyebrow">LEVEL ${progress.level + 1} OF 3 COMPLETE</span><h2 id="dialog-title">${levels[progress.level].name} complete.</h2><p>Your quiz, coins, and prizes are saved.</p><div class="next-level-card"><h3>Next: ${next.name}</h3><p>${next.description}</p><p>Three hearts for the next trail. Your tokens and upgrades come with you.</p></div><button id="next-level" class="primary">${progress.level === 1 ? "Board the rocket →" : "Travel to Austin →"}</button><button id="level-settings" class="secondary">Settings</button>`,
   );
   button("next-level", () => {
     if (progress.level === 1) {
@@ -373,7 +454,7 @@ function browseStore() {
   const stock = inventories[progress.level];
   modal(
     "shop",
-    `<span class="eyebrow">${stores[progress.level].toUpperCase()}</span><h2 id="dialog-title">A choice for this world.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Each stage has just 16 coins, including 4 on higher routes. Prices mean choosing equipment now or saving for later. Each item has one in stock.</p><div class="shop-cards">${stock.map((item) => `<article><span class="upgrade-icon">${item.icon}</span><h3>${item.name}</h3><p>${item.description}</p><button id="buy-${item.id}" class="secondary">Buy ${item.name} · ${item.price} tokens</button></article>`).join("")}</div><p id="shop-feedback" role="status">Stage equipment lasts until the next destination. Shields and unused jet fuel stay until used.</p><button id="leave-shop" class="primary">Back to the store</button>`,
+    `<span class="eyebrow">${stores[progress.level].toUpperCase()}</span><h2 id="dialog-title">A choice for this world.</h2><p>You have <strong id="shop-balance">${progress.tokens}</strong> tokens. Choose equipment or save for the next shop. There is one of each item in stock.</p><div class="shop-cards">${stock.map((item) => `<article><span class="upgrade-icon">${item.icon}</span><h3>${item.name}</h3><p>${item.description}</p><button id="buy-${item.id}" class="secondary">Buy ${item.name} · ${item.price} tokens</button></article>`).join("")}</div><p id="shop-feedback" role="status">Stage equipment lasts until the next destination. Shields and unused jet fuel stay until used.</p><button id="leave-shop" class="primary">Back to the store</button>`,
     true,
   );
   const refresh = () => {
@@ -401,13 +482,19 @@ function browseStore() {
 function ending() {
   modal(
     "ending",
-    `<span class="eyebrow">EARTH TO THE MOON · ALL THREE STAGES COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You crossed Albuquerque, reached the launch site in Austin, and explored the Moon.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.answered.length} / 3</b><span>questions answered</span></div><div><b>${progress.helped.filter((id) => progress.answered.includes(id)).length}</b><span>answered after help</span></div></div><p><strong>Trail ideas:</strong> scarcity, opportunity cost, and trade-offs. ${progress.answered.length < 3 ? "Practice when you are ready below." : "All three ideas practiced."}</p><ul class="answer-summary">${questions.map((q) => `<li>${q.concept} · ${progress.answered.includes(q.id) ? (progress.helped.includes(q.id) ? "answered after help" : "answered") : "not practiced yet"}</li>`).join("")}</ul><label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p><button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
+    `<span class="eyebrow">EARTH TO THE MOON · ALL THREE STAGES COMPLETED</span><div class="finish-art">✦</div><h2 id="dialog-title">A trail well traveled.</h2><p>You crossed Albuquerque, reached the launch site in Austin, and explored the Moon.</p><div class="result-grid"><div><b>${progress.tokens}</b><span>tokens saved</span></div><div><b>${progress.scores.reduce((a, b) => a + b, 0)} / 9</b><span>best quiz points</span></div><div><b>${wardrobe.length}</b><span>prizes collected</span></div></div><p>Explore your prizes and try for a perfect score on your next adventure.</p>${prizes
+      .filter((p) => wardrobe.includes(p.id))
+      .map((p) => prizePreview(p.id, true))
+      .join(
+        "",
+      )}<label class="reflection">Optional reflection: What did you give up when you spent your tokens?<textarea placeholder="Think about it, say it aloud, or write here…" rows="2"></textarea></label><p class="fine-print">Your reflection is not saved or sent anywhere.</p><button id="again" class="primary">Explore again →</button><button id="end-home" class="secondary">Return to title</button>`,
     true,
   );
   button("again", confirmNew);
   button("end-home", title);
 }
 function openSettings() {
+  if (screen === "dying") return;
   previous = screen;
   modal(
     "settings",
@@ -450,21 +537,14 @@ function openSettings() {
     settings.jump = ($("setting-jump") as HTMLSelectElement).value;
     saveSettings();
     scene.cameras.main?.setLerp(settings.reduced ? 1 : 0.09, 1);
+    scene.refreshCoins();
     hud();
     if (previous === "title") title();
-    else if (previous === "question") {
-      // Restore the same question without granting a second reward.
-      const id = currentQuestion;
-      question(id);
-      if (progress.answered.includes(id)) {
-        document
-          .querySelectorAll<HTMLButtonElement>("[data-answer]")
-          .forEach((b) => (b.disabled = true));
-        ($("question-continue") as HTMLButtonElement).disabled = false;
-        $("feedback").textContent =
-          "Answer saved. Your shield reward is already added. Select Continue when you are ready.";
-      }
-    } else if (previous === "ending") ending();
+    else if (previous === "question") question(currentQuestion);
+    else if (previous === "quiz-result") quizResult();
+    else if (previous === "gameover") gameOverDialog();
+    else if (previous === "collection") collection();
+    else if (previous === "ending") ending();
     else if (previous === "shop") {
       screen = "store";
       browseStore();
@@ -561,6 +641,11 @@ if (new URLSearchParams(location.search).has("test"))
         return progress;
       },
       settings,
+      wardrobe,
+      get quizAnswer() {
+        const a = progress.attempt;
+        return a && a.cursor < 3 ? questions[a.ids[a.cursor]].correct : null;
+      },
       get screen() {
         return screen;
       },
