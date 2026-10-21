@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { Runner } from "./player";
 import { LoopRunner } from "./loops";
-import { FINISH_X, SHOP_X } from "./course";
+import { levels, obstacles, movingGaps } from "./course";
 import {
   drawLevel,
   makeTextures,
@@ -24,7 +24,9 @@ export interface Bridge {
 export class Desert extends Phaser.Scene {
   player!: Runner;
   loops!: LoopRunner;
-  private restNear: number | null = null;
+  private stageCheckpoint = false;
+  movingPlatforms!: Phaser.Physics.Arcade.Group;
+  windLabels: Phaser.GameObjects.Text[] = [];
   hazards!: Phaser.Physics.Arcade.Group;
   tokens!: Phaser.Physics.Arcade.StaticGroup;
   activePlay = false;
@@ -47,11 +49,17 @@ export class Desert extends Phaser.Scene {
     this.savedAt = 0;
     this.shopNear = false;
     makeTextures(this);
-    this.physics.world.setBounds(0, -300, WORLD_WIDTH, 1100);
-    const platforms = drawLevel(this);
+    const level = levels[progress.level];
+    this.stageCheckpoint = progress.x >= level.safe;
+    this.physics.world.setBounds(
+      level.left,
+      -300,
+      level.right - level.left,
+      1100,
+    );
+    const platforms = drawLevel(this, settings.mode === "relaxed");
     this.player = new Runner(this, progress.x);
     this.loops = new LoopRunner(this.player);
-    this.restNear = null;
     this.bridge.rest(null);
     this.physics.add.collider(this.player, platforms);
     this.tokens = this.physics.add.staticGroup();
@@ -68,22 +76,62 @@ export class Desert extends Phaser.Scene {
       allowGravity: false,
       immovable: true,
     });
-    hazardPositions.forEach((x, i) => {
-      const h = this.hazards.create(
-        x,
-        482,
-        "tumbleweed",
-      ) as Phaser.Physics.Arcade.Sprite;
-      h.setCircle(15, 3, 3);
-      h.setData("home", x);
-      h.setData("phase", i);
+    this.windLabels = [];
+    obstacles
+      .filter((o) => o.level === progress.level)
+      .forEach((o, i) => {
+        const h = this.hazards.create(
+          o.x,
+          o.kind === "wind" ? 456 : o.kind === "boulder" ? 475 : 482,
+          o.kind,
+        ) as Phaser.Physics.Arcade.Sprite;
+        if (o.kind === "tumbleweed") h.setCircle(15, 3, 3);
+        if (o.kind === "boulder") h.setCircle(22, 3, 3);
+        if (o.kind === "wind") {
+          h.setSize(42, 80);
+          h.setAlpha(0.7);
+          const label = this.add
+            .text(o.x, 393, "Wind building", {
+              fontSize: "12px",
+              color: "#254c49",
+              backgroundColor: "#f6efd8",
+              padding: { x: 5, y: 4 },
+            })
+            .setOrigin(0.5);
+          h.setData("label", label);
+          this.windLabels.push(label);
+        }
+        h.setData("home", o.x)
+          .setData("phase", i)
+          .setData("kind", o.kind)
+          .setData("danger", o.kind !== "wind");
+      });
+    this.physics.add.overlap(this.player, this.hazards, (_p, h) => {
+      if ((h as Phaser.Physics.Arcade.Sprite).getData("danger")) this.hurt();
     });
-    this.physics.add.overlap(this.player, this.hazards, () => this.hurt());
+    this.movingPlatforms = this.physics.add.group({
+      allowGravity: false,
+      immovable: true,
+    });
+    if (progress.level === 2)
+      for (const gap of movingGaps) {
+        const mid = (gap.left + gap.right) / 2;
+        const plank = this.add
+          .rectangle(mid, 492, 150, 16, 0x557c6b)
+          .setStrokeStyle(3, 0xf3d199);
+        this.physics.add.existing(plank);
+        this.movingPlatforms.add(plank);
+        const body = plank.body as Phaser.Physics.Arcade.Body;
+        body.setAllowGravity(false).setImmovable(true).setVelocityX(65);
+        body.friction.x = 1;
+        plank.setData("mid", mid);
+      }
+    this.physics.add.collider(this.player, this.movingPlatforms);
     this.shieldHalo = this.add
       .circle(0, 0, 40, 0, 0)
       .setStrokeStyle(3, 0x2d827d)
       .setDepth(8);
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, 540);
+    this.cameras.main.setBounds(level.left, 0, level.right - level.left, 540);
     this.cameras.main.startFollow(
       this.player,
       true,
@@ -125,13 +173,27 @@ export class Desert extends Phaser.Scene {
   }
   recover() {
     this.loops.reset();
-    this.player.setPosition(progress.x, 420);
+    (this.player.body as Phaser.Physics.Arcade.Body).reset(progress.x, 420);
     this.player.setVelocity(0, 0);
     this.invulnerable = 2.5;
     this.bridge.notice(
       "Back at your safe checkpoint. Your tokens and answers are saved.",
     );
     save();
+  }
+  advanceLevel() {
+    if (
+      progress.level >= 2 ||
+      !progress.completedLevels.includes(progress.level)
+    )
+      return;
+    progress.level++;
+    progress.pendingGate = null;
+    progress.x = levels[progress.level].start;
+    progress.hearts = 3;
+    progress.finished = false;
+    save();
+    this.scene.restart({ play: true });
   }
   hurt() {
     if (!this.activePlay || this.invulnerable > 0) return;
@@ -184,39 +246,60 @@ export class Desert extends Phaser.Scene {
             this.collect(token);
         });
     this.hazards.children.iterate((child) => {
-      const h = child as Phaser.Physics.Arcade.Sprite;
-      h.x =
-        h.getData("home") +
-        Math.sin(this.runTime / 850 + h.getData("phase")) * 34;
-      if (!settings.reduced) h.rotation += dt * 1.2;
+      const h = child as Phaser.Physics.Arcade.Sprite,
+        kind = h.getData("kind");
+      if (kind === "wind") {
+        const cycle = (this.runTime + h.getData("phase") * 700) % 4500;
+        h.setData("danger", cycle >= 1500 && cycle < 3000);
+        (h.getData("label") as Phaser.GameObjects.Text).setText(
+          cycle < 1500
+            ? "Wind building"
+            : cycle < 3000
+              ? "Wind on · jump"
+              : "Calm · go",
+        );
+      } else {
+        const stone = kind === "boulder";
+        h.x =
+          h.getData("home") +
+          Math.sin(this.runTime / (stone ? 550 : 1000) + h.getData("phase")) *
+            (stone ? 105 : 34);
+        if (!settings.reduced) h.rotation += dt * (stone ? 2.2 : 1.1);
+      }
+      return true;
+    });
+    this.movingPlatforms.children.iterate((child) => {
+      const p = child as Phaser.GameObjects.Rectangle,
+        b = p.body as Phaser.Physics.Arcade.Body;
+      if (p.x > p.getData("mid") + 65) b.setVelocityX(-65);
+      else if (p.x < p.getData("mid") - 65) b.setVelocityX(65);
       return true;
     });
     if (this.player.y > 640) this.recover();
-    // Crossing a rest stop saves a safe position without interrupting the run.
-    for (const c of checkpoints) {
-      if (this.player.x >= c.x && progress.x < c.x) {
-        progress.x = c.x + 70;
-        save();
-      }
+    const level = levels[progress.level];
+    if (!this.stageCheckpoint && this.player.x >= level.safe) {
+      this.stageCheckpoint = true;
+      progress.x = level.safe;
+      save();
+      this.bridge.notice("Safe checkpoint saved.");
     }
-    const rest = checkpoints.findIndex(
-      (c, i) =>
-        Math.abs(this.player.x - c.x) < 360 && !progress.answered.includes(i),
-    );
-    const restId = rest < 0 ? null : rest;
-    if (restId !== this.restNear) {
-      this.restNear = restId;
-      this.bridge.rest(restId);
-    }
-    const near = Math.abs(this.player.x - SHOP_X) < 175;
+    const near = Math.abs(this.player.x - level.shop) < 165;
     if (near !== this.shopNear) {
       this.shopNear = near;
       this.bridge.nearby(near);
     }
-    if (this.player.x >= FINISH_X) {
-      progress.finished = true;
+    if (this.player.x >= level.end - 45) {
+      this.loops.reset();
+      (this.player.body as Phaser.Physics.Arcade.Body).reset(
+        level.end - 90,
+        440,
+      );
+      this.player.setVelocity(0, 0);
+      progress.x = level.end - 90;
+      progress.pendingGate = progress.level;
       save();
-      this.bridge.finish();
+      this.bridge.question(progress.level);
+      return;
     }
     if (this.runTime - this.savedAt > 500) {
       this.savedAt = this.runTime;

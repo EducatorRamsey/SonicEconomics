@@ -42,13 +42,21 @@ for (const fallback of [false, true]) {
     await expect(page.locator("#setting-speed")).toBeVisible();
     await page.locator("#settings-done").click();
     await page.locator("#resume").click();
-    await page.evaluate(() => (window as any).rr.teleport(6500));
-    await page.locator("#rest-open").click();
+    await page.evaluate(() => (window as any).rr.teleport(1200));
+    await page.locator("#shop-open").click();
+    await expect(page.locator("#store-controls")).toBeVisible();
+    await page.locator("#store-browse").click();
+    await expect(page.locator("#buy-shield")).toBeVisible();
+    await page.locator("#leave-shop").click();
+    await page.locator("#store-exit").click();
+    await page.evaluate(() => (window as any).rr.teleport(7300));
+
     await expect(page.locator("#dialog-title")).toHaveText(
       "A little water, many gardens",
     );
     await page.locator('[data-answer="0"]').click();
     await page.locator("#question-continue").click();
+    await page.locator("#next-level").click();
     await page.locator("#fullscreen").click();
     await expect(shell).not.toHaveClass(/is-expanded/);
     await page.keyboard.press("f");

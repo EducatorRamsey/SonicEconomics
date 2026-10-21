@@ -1,3 +1,4 @@
+import { levels } from "./course";
 export interface Settings {
   loops: boolean;
   mode: "relaxed" | "challenge";
@@ -11,6 +12,10 @@ export interface Settings {
   jump: string;
 }
 export interface Progress {
+  campaign: number;
+  pendingGate: number | null;
+  level: number;
+  completedLevels: number[];
   x: number;
   tokens: number;
   hearts: number;
@@ -36,6 +41,10 @@ export const defaults: Settings = {
   jump: "SPACE",
 };
 const fresh = (): Progress => ({
+  campaign: 3,
+  level: 0,
+  completedLevels: [],
+  pendingGate: null,
   x: 180,
   tokens: 0,
   hearts: 3,
@@ -70,6 +79,22 @@ export let progress: Progress =
   Array.isArray(raw.collected)
     ? { ...fresh(), ...raw }
     : fresh();
+// Upgrade the old continuous trail without taking away earned currency/upgrades.
+if (raw && raw.campaign !== 3) {
+  progress = {
+    ...fresh(),
+    tokens: progress.tokens,
+    hearts: progress.hearts,
+    shield: progress.shield,
+    boost: progress.boost,
+    purchases: progress.purchases,
+  };
+}
+progress.level = Math.min(2, Math.max(0, Math.floor(progress.level)));
+progress.x = Math.min(
+  levels[progress.level].end - 80,
+  Math.max(levels[progress.level].start, progress.x),
+);
 export function hasSave() {
   return !!raw || !!read("rr-progress");
 }

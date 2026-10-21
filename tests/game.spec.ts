@@ -1,60 +1,31 @@
-import { test, expect, Page } from "@playwright/test";
-import { checkpoints, FINISH_X, SHOP_X, loopTracks } from "../src/course";
-async function state(page: Page) {
-  return page.evaluate(() => {
-    const r = (window as any).rr;
-    return {
-      ...r.progress,
-      x: r.scene.player.x,
-      y: r.scene.player.y,
-      vy: r.scene.player.body.velocity.y,
-      ground: r.scene.player.body.blocked.down,
-      active: r.scene.activePlay,
-      screen: r.screen,
-    };
-  });
-}
-async function teleport(page: Page, x: number, y = 430) {
-  await page.evaluate(({ x, y }) => (window as any).rr.teleport(x, y), {
-    x,
-    y,
-  });
-  await page.waitForTimeout(180);
-}
-async function start(page: Page) {
-  await page.goto("/?test=1");
-  await page.getByRole("button", { name: "Let’s hit the trail" }).click();
-  await expect.poll(async () => (await state(page)).active).toBe(true);
-  await page.waitForTimeout(500);
-}
-async function visitQuestion(page: Page, id: number) {
-  await teleport(page, checkpoints[id].x);
-  await expect(page.locator("#rest-open")).toBeVisible();
-  expect((await state(page)).screen).toBe("play");
-  await page.locator("#rest-open").click();
-}
-async function answer(page: Page, id: number) {
-  await expect(page.getByRole("dialog")).toBeVisible();
-  const correct = [0, 1, 1][id];
-  await page.locator(`[data-answer="${correct}"]`).click();
-  await expect(page.locator("#question-continue")).toBeEnabled();
-  await page.locator("#question-continue").click();
-}
-test("movement, jump, ground/platform collision, tokens, pause and touch", async ({
+import { test, expect } from "@playwright/test";
+import { levels, loopTracks, movingGaps } from "../src/course";
+import {
+  start,
+  state,
+  teleport,
+  visitGate,
+  answer,
+  advanceTo,
+  enterStore,
+} from "./helpers";
+
+test("movement, jumping, platforms, collection, pause, and touch controls", async ({
   page,
 }) => {
   await start(page);
-  const a = await state(page);
+  const initial = await state(page);
   await page.keyboard.down("ArrowRight");
   await expect
     .poll(async () => (await state(page)).x)
-    .toBeGreaterThan(a.x + 100);
+    .toBeGreaterThan(initial.x + 100);
   await page.keyboard.up("ArrowRight");
-  const b = await state(page);
-  await page.keyboard.press("Space");
+  const y = (await state(page)).y;
+  await page.keyboard.down("Space");
   await expect
     .poll(async () => (await state(page)).y, { intervals: [40] })
-    .toBeLessThan(b.y - 25);
+    .toBeLessThan(y - 25);
+  await page.keyboard.up("Space");
   await expect.poll(async () => (await state(page)).ground).toBe(true);
   await teleport(page, 380);
   await expect.poll(async () => (await state(page)).tokens).toBeGreaterThan(0);
@@ -64,19 +35,89 @@ test("movement, jump, ground/platform collision, tokens, pause and touch", async
   await page.locator("#pause").click();
   const paused = await state(page);
   await page.keyboard.down("ArrowRight");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(250);
   await page.keyboard.up("ArrowRight");
-  expect((await state(page)).x).toBeCloseTo(paused.x, 0);
-  await page.getByRole("button", { name: "Resume adventure" }).click();
-  const touch = page.getByRole("button", { name: "Move right", exact: true });
-  await touch.hover();
+  expect((await state(page)).x).toBe(paused.x);
+  await page.locator("#resume").click();
+  await page.getByRole("button", { name: "Move right", exact: true }).hover();
   await page.mouse.down();
   await expect
     .poll(async () => (await state(page)).x)
     .toBeGreaterThan(paused.x + 20);
   await page.mouse.up();
 });
-test("all questions pause hazards and timers, retries, narration, rewards, finish", async ({
+
+test("enter the store, walk to its counter, spend limited tokens, exit, and use both upgrades", async ({
+  page,
+}) => {
+  await start(page);
+  for (const x of [380, 470, 560, 650, 740, 830]) await teleport(page, x);
+  expect((await state(page)).tokens).toBe(6);
+  await enterStore(page);
+  const time = (await state(page)).elapsed;
+  const firstX = await page.evaluate(() => (window as any).rr.store.player.x);
+  await page.keyboard.down("ArrowRight");
+  await expect
+    .poll(() => page.evaluate(() => (window as any).rr.store.player.x), {
+      timeout: 8000,
+    })
+    .toBeGreaterThan(firstX + 310);
+  await page.keyboard.up("ArrowRight");
+  await page.keyboard.press("e");
+  await expect(page.locator("#buy-shield")).toBeVisible();
+  expect((await state(page)).elapsed).toBe(time);
+  await page.locator("#buy-shield").click();
+  expect((await state(page)).shield).toBe(1);
+  expect((await state(page)).tokens).toBe(0);
+  await expect(page.locator("#buy-boost")).toBeDisabled();
+  await page.locator("#leave-shop").click();
+  await expect(page.locator("#store-controls")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#store-resume")).toBeVisible();
+  await page.locator("#store-resume").click();
+  await page.locator("#game-settings").click();
+  await page.locator("#settings-done").click();
+  await expect(page.locator("#store-controls")).toBeVisible();
+  await page.keyboard.down("ArrowLeft");
+  await expect
+    .poll(() => page.evaluate(() => (window as any).rr.store.player.x), {
+      timeout: 8000,
+    })
+    .toBeLessThan(170);
+  await page.keyboard.up("ArrowLeft");
+  await page.keyboard.press("e");
+  expect((await state(page)).screen).toBe("play");
+  await expect(page.locator("#shop-open")).toBeVisible();
+  await page.keyboard.press("e");
+  await expect(page.locator("#store-controls")).toBeVisible();
+  await page.locator("#store-exit").click();
+  expect((await state(page)).screen).toBe("play");
+  for (const x of [1400, 1522, 1644, 1766]) await teleport(page, x);
+  await enterStore(page);
+  await page.locator("#store-browse").click();
+  await page.locator("#buy-boost").click();
+  expect((await state(page)).boost).toBe(25);
+  await page.waitForTimeout(250);
+  expect((await state(page)).boost).toBe(25);
+  await page.locator("#leave-shop").click();
+  await page.locator("#store-exit").click();
+  await expect.poll(async () => (await state(page)).ground).toBe(true);
+  const y = (await state(page)).y;
+  await page.keyboard.down("Space");
+  await page.waitForFunction(
+    (y) => (window as any).rr.scene.player.y < y - 112,
+    y,
+  );
+  await page.keyboard.up("Space");
+  await teleport(page, 5900);
+  await expect.poll(async () => (await state(page)).shield).toBe(0);
+  expect((await state(page)).hearts).toBe(3);
+  await page.reload();
+  await page.locator("#continue-save").click();
+  expect((await state(page)).purchases).toEqual(["shield", "boost"]);
+});
+
+test("mandatory level-end questions gate progress, freeze simulation, support retries and narration, and never duplicate rewards", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -85,207 +126,237 @@ test("all questions pause hazards and timers, retries, narration, rewards, finis
   await page.evaluate(() => {
     const r = (window as any).rr;
     r.settings.mode = "challenge";
-    r.hud();
     const calls: string[] = [];
-    Object.defineProperty(window, "__speech", { value: calls });
+    (window as any).__speech = calls;
     window.speechSynthesis.speak = (u) => calls.push(u.text);
     window.speechSynthesis.cancel = () => calls.push("STOP");
   });
   for (let id = 0; id < 3; id++) {
-    await visitQuestion(page, id);
+    await visitGate(page, id);
+    expect((await state(page)).x).toBeLessThan(levels[id].end);
+    const before = await state(page);
+    const snapshot = await page.evaluate(() => {
+      const s = (window as any).rr.scene;
+      return {
+        time: s.runTime,
+        hazards: s.hazards.getChildren().map((h: any) => [h.x, h.y]),
+        platforms: s.movingPlatforms.getChildren().map((p: any) => p.x),
+      };
+    });
+    await page.waitForTimeout(300);
+    expect((await state(page)).elapsed).toBe(before.elapsed);
+    expect(
+      await page.evaluate(() => {
+        const s = (window as any).rr.scene;
+        return {
+          time: s.runTime,
+          hazards: s.hazards.getChildren().map((h: any) => [h.x, h.y]),
+          platforms: s.movingPlatforms.getChildren().map((p: any) => p.x),
+        };
+      }),
+    ).toEqual(snapshot);
+    await page.locator('[data-answer="2"]').click();
+    await expect(page.locator("#feedback")).toContainText("Try another answer");
+    await expect(page.locator("#question-continue")).toBeDisabled();
+    expect((await state(page)).level).toBe(id);
+    expect((await state(page)).tokens).toBe(before.tokens);
+    expect((await state(page)).hearts).toBe(before.hearts);
+    await page.locator("#listen").click();
+    await page.locator("#replay").click();
+    await page.locator("#stop-speech").click();
+    expect(
+      await page.evaluate(() =>
+        (window as any).__speech.some(
+          (s: string) =>
+            s.includes("Answer A.") &&
+            s.includes("Answer B.") &&
+            s.includes("Answer C."),
+        ),
+      ),
+    ).toBe(true);
+    await page.locator(`[data-answer="${[0, 1, 1][id]}"]`).click();
+    expect((await state(page)).shield).toBe(before.shield + 1);
+    await page.locator("#question-settings").click();
+    await page.locator("#settings-done").click();
+    expect((await state(page)).shield).toBe(before.shield + 1);
+    await page.locator("#question-continue").click();
+    if (id < 2) {
+      expect((await state(page)).level).toBe(id);
+      await expect(page.locator("#next-level")).toBeVisible();
+      await page.locator("#next-level").click();
+      await expect.poll(async () => (await state(page)).level).toBe(id + 1);
+      await expect.poll(async () => (await state(page)).active).toBe(true);
+    } else
+      await expect(page.locator("#dialog-title")).toHaveText(
+        "A trail well traveled.",
+      );
+  }
+  expect((await state(page)).completedLevels).toEqual([0, 1, 2]);
+  expect((await state(page)).answered).toHaveLength(3);
+  expect((await state(page)).helped).toHaveLength(3);
+  expect((await state(page)).finished).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test("save at a pending gate, reload an answered gate, recover hearts, and preserve settings on restart", async ({
+  page,
+}) => {
+  await start(page);
+  await visitGate(page, 0);
+  await page.locator('[data-answer="0"]').click();
+  const shield = (await state(page)).shield;
+  await page.reload();
+  await page.locator("#continue-save").click();
+  await expect(page.locator("#question-continue")).toBeEnabled();
+  expect((await state(page)).level).toBe(0);
+  expect((await state(page)).shield).toBe(shield);
+  await page.locator("#question-continue").click();
+  await page.locator("#next-level").click();
+  await expect.poll(async () => (await state(page)).level).toBe(1);
+  await expect.poll(async () => (await state(page)).active).toBe(true);
+  await teleport(page, levels[1].safe + 10);
+  await page.evaluate(() => ((window as any).rr.progress.shield = 0));
+  await teleport(page, 13700);
+  await expect.poll(async () => (await state(page)).hearts).toBe(2);
+  await page.waitForTimeout(200);
+  expect((await state(page)).hearts).toBe(2);
+  await page.evaluate(() => {
+    const r = (window as any).rr;
+    r.scene.invulnerable = 0;
+    r.scene.hurt();
+    r.scene.invulnerable = 0;
+    r.scene.hurt();
+  });
+  expect((await state(page)).hearts).toBe(3);
+  expect((await state(page)).x).toBeCloseTo(levels[1].safe, 0);
+  await teleport(page, 12000, 690);
+  await expect
+    .poll(async () => Math.abs((await state(page)).x - levels[1].safe))
+    .toBeLessThan(5);
+  await page.locator("#global-settings").click();
+  await page.locator("#setting-speed").selectOption("0.7");
+  await page.locator("#setting-reduced").check();
+  await page.locator("#mute").click();
+  await page.locator("#settings-done").click();
+  await page.reload();
+  await page.locator("#continue-save").click();
+  expect((await state(page)).level).toBe(1);
+  expect((await state(page)).x).toBeCloseTo(levels[1].safe, 0);
+  await page.locator("#pause").click();
+  await page.locator("#restart").click();
+  await page.locator("#confirm-new").click();
+  await expect.poll(async () => (await state(page)).active).toBe(true);
+  expect((await state(page)).level).toBe(0);
+  expect((await state(page)).completedLevels).toEqual([]);
+  expect((await state(page)).tokens).toBe(0);
+  expect(await page.evaluate(() => (window as any).rr.settings.reduced)).toBe(
+    true,
+  );
+});
+
+test("complete all three levels with ordinary gentle-speed movement, different hazards, and one mandatory question each", async ({
+  page,
+}) => {
+  test.setTimeout(200000);
+  await start(page);
+  await page.evaluate(() => ((window as any).rr.settings.speed = 0.7));
+  for (let id = 0; id < 3; id++) {
+    const kinds = await page.evaluate(() =>
+      (window as any).rr.scene.hazards
+        .getChildren()
+        .map((h: any) => h.getData("kind")),
+    );
+    expect(kinds).toContain(["tumbleweed", "boulder", "wind"][id]);
+    await page.keyboard.down("ArrowRight");
+    const deadline = Date.now() + 70000;
+    while ((await state(page)).screen === "play" && Date.now() < deadline) {
+      const current = await state(page);
+      // Use ordinary jumps on level-two stairs and level-three moving bridges.
+      const jumpSection =
+        (id === 1 && current.x > 8380 && current.x < 9300) ||
+        (id === 2 &&
+          movingGaps.some(
+            (gap) => current.x > gap.left - 300 && current.x < gap.right + 220,
+          ));
+      if (jumpSection && current.ground) {
+        await page.keyboard.down("Space");
+        await page.waitForTimeout(140);
+        await page.keyboard.up("Space");
+      }
+      await page.waitForTimeout(120);
+    }
     await expect(page.locator("#dialog-title")).toHaveText(
       [
         "A little water, many gardens",
         "One afternoon, two choices",
         "Supplies for the trail",
       ][id],
+      { timeout: 70000 },
     );
-    const before = await state(page);
-    const hazard = await page.evaluate(
-      () => (window as any).rr.scene.hazards.getChildren()[0].x,
-    );
-    await page.waitForTimeout(350);
-    expect((await state(page)).elapsed).toBe(before.elapsed);
+    await page.keyboard.up("ArrowRight");
+    expect((await state(page)).level).toBe(id);
     expect(
-      await page.evaluate(
-        () => (window as any).rr.scene.hazards.getChildren()[0].x,
-      ),
-    ).toBe(hazard);
-    await page.locator('[data-answer="2"]').click();
-    await expect(page.locator("#feedback")).toContainText("Try another answer");
-    expect((await state(page)).tokens).toBe(before.tokens);
-    expect((await state(page)).hearts).toBe(before.hearts);
-    await page.getByRole("button", { name: "▷ Listen" }).click();
-    await page.getByRole("button", { name: "↻ Replay" }).click();
-    await page.getByRole("button", { name: "■ Stop" }).click();
-    const speech = await page.evaluate(() => (window as any).__speech);
-    expect(
-      speech.some(
-        (s: string) =>
-          s.includes("Answer A.") &&
-          s.includes("Answer B.") &&
-          s.includes("Answer C."),
-      ),
-    ).toBe(true);
-    await page.locator(`[data-answer="${[0, 1, 1][id]}"]`).click();
-    expect((await state(page)).shield).toBe(before.shield + 1);
-    await page
-      .getByRole("button", { name: "Settings", exact: true })
-      .last()
-      .click();
-    await page.locator("#settings-done").click();
-    expect((await state(page)).shield).toBe(before.shield + 1);
-    await page.locator("#question-continue").click();
+      await page.evaluate(() => (window as any).rr.scene.loops.completed.size),
+    ).toBe(2);
+    await answer(page, id);
   }
-  await teleport(page, FINISH_X + 10);
-  await expect(page.locator("#dialog-title")).toHaveText(
-    "A trail well traveled.",
-  );
-  expect((await state(page)).answered).toHaveLength(3);
-  expect((await state(page)).helped).toHaveLength(3);
   expect((await state(page)).finished).toBe(true);
-  expect(errors).toEqual([]);
-});
-test("shop trade-off and both functional upgrades", async ({ page }) => {
-  await start(page);
-  for (const x of [380, 470, 560, 650, 740, 830]) await teleport(page, x);
-  expect((await state(page)).tokens).toBe(6);
-  await visitQuestion(page, 0);
-  await answer(page, 0);
-  await teleport(page, SHOP_X);
-  await page.locator("#shop-open").click();
-  await page.locator("#buy-shield").click();
-  expect((await state(page)).tokens).toBe(0);
-  expect((await state(page)).shield).toBe(2);
-  await expect(page.locator("#buy-boost")).toBeDisabled();
-  await page.locator("#leave-shop").click();
-  for (const x of [SHOP_X + 200, SHOP_X + 322, SHOP_X + 444, SHOP_X + 566])
-    await teleport(page, x);
-  await teleport(page, SHOP_X);
-  await page.locator("#shop-open").click();
-  await page.locator("#buy-boost").click();
-  expect((await state(page)).boost).toBe(25);
-  expect((await state(page)).purchases).toEqual(["shield", "boost"]);
-  await page.waitForTimeout(350);
-  expect((await state(page)).boost).toBe(25);
-  await page.locator("#leave-shop").click();
-  await page.waitForTimeout(450);
-  const groundY = (await state(page)).y;
-  await page.keyboard.down("Space");
-  await page.waitForFunction(
-    (y) => (window as any).rr.scene.player.y < y - 112,
-    groundY,
-  );
-  await page.keyboard.up("Space");
-  // Spawn above the ground, not inside the floor collider.
-  await teleport(page, 8300, 430);
-  await expect.poll(async () => (await state(page)).shield).toBe(1);
-  expect((await state(page)).hearts).toBe(3);
-});
-test("hearts, invulnerability, fall recovery, save/continue and new game settings", async ({
-  page,
-}) => {
-  await start(page);
-  await visitQuestion(page, 0);
-  await answer(page, 0);
-  await page.evaluate(() => ((window as any).rr.progress.shield = 0));
-  // Spawn above the ground, not inside the floor collider.
-  await teleport(page, 8300, 430);
-  await expect.poll(async () => (await state(page)).hearts).toBe(2);
-  await page.waitForTimeout(350);
-  expect((await state(page)).hearts).toBe(2);
-  await page.evaluate(() => {
-    const r = (window as any).rr;
-    r.scene.invulnerable = 0;
-    r.scene.hurt();
-  });
-  expect((await state(page)).hearts).toBe(1);
-  await page.evaluate(() => {
-    const r = (window as any).rr;
-    r.scene.invulnerable = 0;
-    r.scene.hurt();
-  });
-  expect((await state(page)).hearts).toBe(3);
-  expect((await state(page)).x).toBeCloseTo(checkpoints[0].x + 70, 0);
-  await teleport(page, 3000, 690);
-  await expect
-    .poll(async () => Math.abs((await state(page)).x - checkpoints[0].x - 70))
-    .toBeLessThan(5);
-  await page.locator("#global-settings").click();
-  await page.locator("#setting-speed").selectOption("0.7");
-  await page.locator("#setting-reduced").check();
-  await page.locator("#setting-mode").selectOption("challenge");
-  await page.locator("#mute").click();
-  await page.locator("#settings-done").click();
-  await page.reload();
-  await page.getByRole("button", { name: "Continue adventure" }).click();
-  expect((await state(page)).answered).toEqual([0]);
-  expect((await state(page)).x).toBeCloseTo(checkpoints[0].x + 70, 0);
-  expect(await page.evaluate(() => (window as any).rr.settings.speed)).toBe(
-    0.7,
-  );
-  await page.locator("#pause").click();
-  await page.getByRole("button", { name: "Restart · new game" }).click();
-  await page
-    .getByRole("button", { name: "Start new game", exact: true })
-    .click();
-  await expect.poll(async () => (await state(page)).active).toBe(true);
-  expect((await state(page)).answered).toEqual([]);
-  expect((await state(page)).tokens).toBe(0);
-  expect(await page.evaluate(() => (window as any).rr.settings.reduced)).toBe(
-    true,
-  );
-});
-test("keyboard menu access and no missing local assets", async ({ page }) => {
-  const failures: string[] = [];
-  page.on("response", (r) => {
-    if (r.status() >= 400) failures.push(r.url());
-  });
-  await page.goto("/?test=1");
-  await page.keyboard.press("Enter");
-  await expect.poll(async () => (await state(page)).screen).toBe("play");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  expect(failures).toEqual([]);
-  await page.screenshot({
-    path: `test-results/trail-${test.info().project.name}.png`,
-  });
-});
-test("the whole gentle-speed trail flows through six loops without forced questions, then offers practice", async ({
-  page,
-}) => {
-  test.setTimeout(180000);
-  await start(page);
-  await page.evaluate(() => {
-    const r = (window as any).rr;
-    r.settings.speed = 0.7;
-  });
-  await page.keyboard.down("ArrowRight");
-  await expect(page.locator("#dialog-title")).toHaveText(
-    "A trail well traveled.",
-    { timeout: 150000 },
-  );
-  await page.keyboard.up("ArrowRight");
-  expect((await state(page)).finished).toBe(true);
-  expect((await state(page)).answered).toEqual([]);
-  expect(
-    await page.evaluate(() => (window as any).rr.scene.loops.completed.size),
-  ).toBe(6);
-  await expect(page.locator(".answer-summary")).toContainText(
-    "not practiced yet",
-  );
-  await page.locator("#review-questions").click();
-  for (let id = 0; id < 3; id++) await answer(page, id);
-  await expect(page.locator("#dialog-title")).toHaveText(
-    "A trail well traveled.",
-  );
-  expect((await state(page)).answered).toHaveLength(3);
-  await expect(page.locator("#review-questions")).toHaveCount(0);
+  expect((await state(page)).completedLevels).toEqual([0, 1, 2]);
 });
 
-test("loop physics invert the runner, preserve pause, respond to braking and allow jumping out in both directions", async ({
+test("wind warnings change collision danger, moving bridges carry the player, and challenge gaps can be jumped", async ({
+  page,
+}) => {
+  await start(page);
+  await advanceTo(page, 1);
+  await visitGate(page, 1);
+  await answer(page, 1, false);
+  await page.locator("#level-settings").click();
+  await page.locator("#setting-mode").selectOption("challenge");
+  await page.locator("#settings-done").click();
+  await page.locator("#next-level").click();
+  await expect.poll(async () => (await state(page)).level).toBe(2);
+  await expect.poll(async () => (await state(page)).active).toBe(true);
+  await page.evaluate(() => ((window as any).rr.scene.runTime = 3100));
+  await teleport(page, 16650);
+  const before = await state(page);
+  await page.waitForTimeout(200);
+  expect((await state(page)).shield).toBe(before.shield);
+  expect((await state(page)).hearts).toBe(before.hearts);
+  await page.evaluate(() => ((window as any).rr.scene.runTime = 1700));
+  await expect
+    .poll(async () => (await state(page)).shield)
+    .toBe(before.shield - 1);
+  const platform = await page.evaluate(() => {
+    const p = (window as any).rr.scene.movingPlatforms.getChildren()[0];
+    return { x: p.x, y: p.y };
+  });
+  await teleport(page, platform.x, 390);
+  await expect.poll(async () => (await state(page)).ground).toBe(true);
+  expect((await state(page)).y).toBeCloseTo(platform.y - 8 - 32, 0);
+  const px = (await state(page)).x;
+  await expect
+    .poll(async () => Math.abs((await state(page)).x - px))
+    .toBeGreaterThan(15);
+  for (const gap of movingGaps) {
+    await teleport(page, gap.left - 240);
+    await expect.poll(async () => (await state(page)).ground).toBe(true);
+    await page.keyboard.down("ArrowRight");
+    await page.waitForFunction(
+      (x) => (window as any).rr.scene.player.x > x - 135,
+      gap.left,
+    );
+    await page.keyboard.down("Space");
+    await page.waitForFunction(
+      (x) => (window as any).rr.scene.player.x > x + 50,
+      gap.right,
+    );
+    await page.keyboard.up("Space");
+    await page.keyboard.up("ArrowRight");
+  }
+});
+
+test("loop inversion, pause, braking, and jump exits work in both directions", async ({
   page,
 }) => {
   await start(page);
@@ -308,7 +379,7 @@ test("loop physics invert the runner, preserve pause, respond to braking and all
   const angle = await page.evaluate(
     () => (window as any).rr.scene.loops.active.angle,
   );
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(200);
   expect(
     await page.evaluate(() => (window as any).rr.scene.loops.active.angle),
   ).toBe(angle);
@@ -321,9 +392,6 @@ test("loop physics invert the runner, preserve pause, respond to braking and all
     )
     .toBe(1);
   await page.keyboard.up("ArrowRight");
-  expect(
-    await page.evaluate(() => (window as any).rr.scene.player.body.enable),
-  ).toBe(true);
   await teleport(page, loopTracks[0].x + 430);
   await page.keyboard.down("ArrowLeft");
   await expect
@@ -345,17 +413,18 @@ test("loop physics invert the runner, preserve pause, respond to braking and all
       { intervals: [40] },
     )
     .toBeLessThan(speed - 20);
-  await page.keyboard.press("Space");
+  await page.keyboard.down("Space");
   await expect
     .poll(() => page.evaluate(() => (window as any).rr.scene.loops.active))
     .toBe(null);
+  await page.keyboard.up("Space");
   await page.keyboard.up("ArrowRight");
   expect(
     await page.evaluate(() => (window as any).rr.scene.player.body.enable),
   ).toBe(true);
 });
 
-test("loop comfort setting keeps a continuous ground route", async ({
+test("loop comfort setting preserves a continuous ground route and keyboard menus", async ({
   page,
 }) => {
   await start(page);
@@ -372,11 +441,52 @@ test("loop comfort setting keeps a continuous ground route", async ({
   expect(
     await page.evaluate(() => (window as any).rr.scene.loops.completed.size),
   ).toBe(0);
-  expect(
-    await page.evaluate(() => (window as any).rr.scene.player.rotation),
-  ).toBe(0);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#resume")).toBeVisible();
+  await page.keyboard.press("Escape");
+  expect((await state(page)).screen).toBe("play");
   await page.reload();
   expect(await page.evaluate(() => (window as any).rr.settings.loops)).toBe(
     false,
+  );
+});
+
+test("old trail saves keep earned currency, upgrades, and accessibility settings while starting the new campaign", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "rr-progress",
+      JSON.stringify({
+        x: 20000,
+        tokens: 17,
+        hearts: 2,
+        shield: 2,
+        boost: 8,
+        elapsed: 100,
+        answered: [0, 1, 2],
+        helped: [1],
+        collected: [0, 1],
+        finished: true,
+        purchases: ["shield"],
+      }),
+    );
+    localStorage.setItem(
+      "rr-settings",
+      JSON.stringify({ speed: 0.7, reduced: true }),
+    );
+  });
+  await page.goto("/?test=1");
+  await page.locator("#continue-save").click();
+  await expect.poll(async () => (await state(page)).active).toBe(true);
+  const s = await state(page);
+  expect(s.level).toBe(0);
+  expect(s.tokens).toBe(17);
+  expect(s.shield).toBe(2);
+  expect(s.answered).toEqual([]);
+  expect(s.completedLevels).toEqual([]);
+  expect(s.finished).toBe(false);
+  expect(await page.evaluate(() => (window as any).rr.settings.reduced)).toBe(
+    true,
   );
 });

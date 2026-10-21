@@ -5,12 +5,15 @@ import {
   SHOP_X,
   checkpoints,
   loopTracks,
+  levels,
+  movingGaps,
+  obstacles,
 } from "./course";
 export { WORLD_WIDTH, FINISH_X, SHOP_X, checkpoints } from "./course";
-export const hazardPositions = [3300, 8300, 11200, 15800, 19000, 22350];
+export const hazardPositions = obstacles.map((o) => o.x);
 export const tokenPositions = [
   ...Array.from({ length: 6 }, (_, i) => ({ x: 380 + i * 90, y: 442 })),
-  ...Array.from({ length: 120 }, (_, i) => ({
+  ...Array.from({ length: 175 }, (_, i) => ({
     x: SHOP_X + 200 + i * 122,
     y: i % 13 === 4 ? 365 : 442,
   })),
@@ -26,10 +29,14 @@ export const tokenPositions = [
       }),
     ),
 ];
-export function drawLevel(scene: Phaser.Scene) {
+export function drawLevel(scene: Phaser.Scene, relaxed = true) {
   const g = scene.add.graphics();
   g.fillGradientStyle(0xf3ddaf, 0xf3ddaf, 0xffeed0, 0xffeed0, 1);
   g.fillRect(0, 0, WORLD_WIDTH, 540);
+  g.fillStyle(0xe6c5a2);
+  g.fillRect(levels[1].left, 0, levels[1].right - levels[1].left, 540);
+  g.fillStyle(0xcbd9cf);
+  g.fillRect(levels[2].left, 0, levels[2].right - levels[2].left, 540);
   g.fillStyle(0xfff5d5);
   g.fillCircle(770, 92, 43);
   for (let x = 0; x < WORLD_WIDTH; x += 650) {
@@ -91,17 +98,31 @@ export function drawLevel(scene: Phaser.Scene) {
         g.fillEllipse(x + (n % 2 ? 7 : -5), 390 + n * 8, 10, 7);
     }
   }
-  // Adobe village, a locally drawn landmark at the safe shop.
-  for (let i = 0; i < 3; i++) {
-    const x = SHOP_X - 150 + i * 92;
-    g.fillStyle([0xd38c65, 0xe4ae7c, 0xcb805e][i]);
-    g.fillRect(x, 355 - i * 13, 86, 109 + i * 13);
-    g.fillStyle(0x855744);
-    g.fillRect(x - 5, 351 - i * 13, 96, 9);
-    g.fillStyle(0x49605b);
-    g.fillRoundedRect(x + 28, 402, 29, 62, 12);
-    g.fillStyle(0xf7d69a);
-    g.fillRect(x + 12, 376, 15, 19);
+  // Enterable adobe outposts, one safe store in each level.
+  for (const level of levels) {
+    const x = level.shop;
+    g.fillStyle(0xcd8d67);
+    g.fillRoundedRect(x - 125, 325, 250, 175, 8);
+    g.fillStyle(0x88553e);
+    g.fillRect(x - 135, 320, 270, 12);
+    g.fillStyle(0x355c54);
+    g.fillRoundedRect(x - 24, 411, 48, 89, 20);
+    g.fillStyle(0xf9dd9b);
+    g.fillRect(x - 98, 390, 45, 42);
+    g.fillRect(x + 55, 390, 45, 42);
+    g.fillStyle(0x396c60);
+    g.fillRect(x - 140, 368, 280, 15);
+    scene.add
+      .text(x, 343, "SUNSTONE SUPPLY", {
+        fontFamily: "sans-serif",
+        fontSize: "17px",
+        color: "#fff7df",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    scene.add
+      .text(x, 400, "ENTER · E", { fontSize: "11px", color: "#fff7df" })
+      .setOrigin(0.5);
   }
   g.fillStyle(0xf4cf97);
   g.fillRect(0, 500, WORLD_WIDTH, 40);
@@ -119,8 +140,22 @@ export function drawLevel(scene: Phaser.Scene) {
     scene.physics.add.existing(p, true);
     platforms.add(p);
   }
-  floor(0, 3500);
-  floor(3670, WORLD_WIDTH - 3670);
+  const gaps = [{ left: 3500, right: 3670 }, ...movingGaps];
+  let start = 0;
+  for (const gap of gaps) {
+    floor(start, gap.left - start);
+    start = gap.right;
+    g.fillStyle(0x805d4d);
+    g.fillRect(gap.left, 500, gap.right - gap.left, 40);
+  }
+  floor(start, WORLD_WIDTH - start);
+  if (relaxed)
+    for (const gap of movingGaps) {
+      floor(gap.left, gap.right - gap.left);
+      g.fillStyle(0x9eac91);
+      g.fillRect(gap.left, 501, gap.right - gap.left, 7);
+    }
+
   // Small optional ravine, with a broad bridge requiring no jump.
   g.fillStyle(0x805d4d);
   g.fillRect(3500, 507, 170, 33);
@@ -129,7 +164,9 @@ export function drawLevel(scene: Phaser.Scene) {
   floor(3480, 210);
   for (const p of [
     { x: 700, y: 407, w: 190 },
-    { x: 2070, y: 411, w: 220 },
+    { x: 8600, y: 447, w: 190 },
+    { x: 8770, y: 399, w: 210 },
+    { x: 8950, y: 353, w: 230 },
     { x: 3210, y: 410, w: 200 },
   ]) {
     g.fillStyle(0xb47955);
@@ -154,8 +191,12 @@ export function drawLevel(scene: Phaser.Scene) {
       .setOrigin(0.5);
   };
   sign(370, "PRACTICE · Move & jump");
-  sign(SHOP_X, "TRAIL SHOP");
+  levels.forEach((l) => {
+    sign(l.shop - 240, "STORE AHEAD · Enter with E");
+    sign(l.safe, "SAFE CHECKPOINT");
+  });
   sign(3600, "EASY BRIDGE");
+  sign(8370, "STEP UP · Jump the ledges");
   for (const loop of loopTracks) {
     // The visible track matches the runner's constrained circular surface.
     g.lineStyle(43, 0x925d42);
@@ -169,7 +210,7 @@ export function drawLevel(scene: Phaser.Scene) {
     sign(loop.x - 330, "LOOP AHEAD · Keep running →");
   }
   checkpoints.forEach((c, i) => {
-    sign(c.x + 155, "REST STOP · Questions optional · E");
+    sign(c.x - 180, `LEVEL ${i + 1} FINISH · ECONOMICS CHECKPOINT`);
     g.fillStyle(0xfaf2d7);
     g.fillRoundedRect(c.x - 22, 405, 44, 89, 14);
     g.lineStyle(3, 0x2c706b);
@@ -244,6 +285,25 @@ export function makeTextures(scene: Phaser.Scene) {
   t.lineBetween(12, 6, 12, 18);
   t.generateTexture("token", 24, 24);
   t.destroy();
+  const rock = scene.make.graphics({ x: 0, y: 0 });
+  rock.fillStyle(0x877663);
+  rock.fillCircle(25, 25, 24);
+  rock.lineStyle(3, 0xb9a184);
+  rock.strokeCircle(25, 25, 21);
+  rock.lineBetween(12, 15, 30, 8);
+  rock.lineBetween(30, 8, 41, 29);
+  rock.lineBetween(41, 29, 20, 41);
+  rock.generateTexture("boulder", 50, 50);
+  rock.destroy();
+  const wind = scene.make.graphics({ x: 0, y: 0 });
+  wind.lineStyle(3, 0x638b8b);
+  for (let i = 0; i < 4; i++) {
+    wind.beginPath();
+    wind.arc(24, 14 + i * 17, 16, Math.PI * 0.2, Math.PI * 1.7);
+    wind.strokePath();
+  }
+  wind.generateTexture("wind", 52, 88);
+  wind.destroy();
   const h = scene.make.graphics({ x: 0, y: 0 });
   h.lineStyle(3, 0x9d694b);
   h.strokeCircle(18, 18, 16);

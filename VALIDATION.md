@@ -56,3 +56,23 @@ Live site checks from this workspace are blocked by the network proxy for educat
 - Added a fixed viewport-filling fallback when native fullscreen is blocked/unavailable. A ResizeObserver refreshes Phaser's FIT scaling so artwork keeps its proportions while the canvas enlarges.
 - Eight selected Playwright checks passed in 50.8 seconds: native and fallback fullscreen at desktop and Chromebook sizes, plus existing movement/platform/touch and keyboard-menu checks on both sizes. Tests assert canvas width increases by more than 100 pixels, wrapper matches the viewport, settings/questions remain usable, and button/F/Esc exits restore normal mode.
 - TypeScript and production build pass. Existing Phaser bundle-size warning remains; no new runtime dependencies were added.
+
+## Three Trails v3 · October 21, 2026
+
+The continuous optional-quiz course is now three bounded levels: Sunstone Flats (slow tumbleweeds), Copper Mesa (faster boulders and stepped ledges), and Windbreak Canyon (timed wind, a boulder, and horizontally moving bridges). Each keeps two upside-down loops. Relaxed mode retains safety paths under bridge gaps; Challenge mode opens the gaps at level entry.
+
+Each level ends at one automatic, mandatory economics gate. Physics, hazards, moving bridges, outdoor elapsed time, and boost duration pause. Wrong answers never take currency/hearts or unlock the next stage. Correct answers grant one shield once; explicit Continue saves completion, then a stage card starts the next level. All three completions are prerequisites for the ending. Pending/correct-but-uncontinued questions and stage cards survive reloads.
+
+Each level has an enterable adobe store with a separate playable Phaser room, shelves, a counter, a shopkeeper, and a door. Tests walk to the counter and use E, buy both working upgrades over repeated visits, use Settings/pause indoors, walk back to the door and exit with E, immediately re-enter, and return outside. Outdoor timers and boosts stay paused indoors. Stores, menus, level cards, and questions remain in the existing full-screen shell.
+
+Validation outcomes:
+
+- TypeScript and production build pass. No additional runtime dependencies; inherited Phaser bundle-size warning remains.
+- Twenty-two distinct browser scenarios verified across desktop and Chromebook sizes: four fullscreen/fallback cases and eighteen campaign cases (movement, physical store/purchases, mandatory gate/retry/narration/reward rules, pending-gate and progression saves, full campaign traversal, timed wind/platform carry/Challenge jumps, loop surface mechanics, ground-route comfort settings, old-save migration).
+- Initial straight-line traversal automation stopped at the new level-two stairs. The full-campaign driver was updated to use ordinary keyboard jumps on stairs and moving bridges, preserving the actual obstacle difficulty. Both complete three-level/six-loop runs then passed in 2.6 minutes total, with no diagnostic repositioning.
+- Focused bridge checks verify platform carrying, active versus calm wind collisions, and normal jumps across both open Challenge gaps. The new stair/bridge routes are reachable with normal jump physics; upgrades remain optional.
+- The final strengthened indoor-store cases, including E door exit and immediate re-entry, passed on both sizes in 1.1 minutes.
+- Old continuous-trail saves retain earned currency, upgrades, hearts, and comfort settings while starting the new mandatory campaign at level one.
+- Reviewed the rendered store interior at Chromebook-sized fullscreen; no uncaught errors in that check.
+
+Existing limitations remain: actual device voice/audio quality, physical touch hardware, non-Chromium browsers, and live GitHub Pages deployment propagation are not verified here. GitHub Pages checks from the workspace remain network-blocked. The release artifact and build are independently tested before the Git push.

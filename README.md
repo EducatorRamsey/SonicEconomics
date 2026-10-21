@@ -1,100 +1,112 @@
-# Roadrunner Rush
+# Roadrunner Rush · Three Trails v3
 
-A playable, original desert platformer for practicing **scarcity, opportunity cost, and trade-offs**. Built with Phaser 3, TypeScript, and Vite in SonicEconomics. This project does not use or modify Butterfly Effect.
+An original New Mexico platformer built with Phaser 3, TypeScript, and Vite. Run six upside-down loops, visit enterable stores, and practice scarcity, opportunity cost, and trade-offs. This repository is separate from Butterfly Effect.
 
-## Preview the game
+## Play
 
-Install Node.js 22.12+ (Node 24 recommended), then open a terminal in this folder:
+On the published site, choose **New game** for a fresh three-level adventure or **Continue adventure** to resume your saved checkpoint. The header/footer show **Three Trails v3**.
+
+- **Move:** arrows or A / D. **Jump:** Space, W, or Up. Labeled touch buttons work too.
+- **Full screen:** the toolbar or title-menu button; **F** toggles and **Esc** exits. If native fullscreen is unavailable, the game fills the browser window. All menus, store controls, and questions remain inside the full-screen game.
+- **Pause:** toolbar button or Esc when not already in fullscreen. Settings are available during play and inside the store.
+- Hold a direction to build momentum and run around loops. Press the opposite direction to brake or jump off the loop. A speed assist keeps loops forgiving. **Run the loop tracks** can be turned off to use the ground route.
+
+## Three levels
+
+| Level                | Main obstacles                        | What changes                                                                     |
+| -------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| 1 · Sunstone Flats   | Slow tumbleweeds                      | Safe practice area, broad paths, two loops, and a store before the first hazard. |
+| 2 · Copper Mesa      | Faster rolling boulders               | Wider moving hazards and stepped ledges with optional higher routes.             |
+| 3 · Windbreak Canyon | Timed wind columns and moving bridges | Read the wind warnings, jump active gusts, and cross the moving bridge sections. |
+
+Each level has two loops, a store, a midpoint recovery checkpoint, and **one mandatory economics question at the finish**. Questions do not appear in the middle of a level. The next level stays locked until the question is answered correctly and the player selects **Continue**, then **Start level 2/3**. The completion card explains the next obstacles. The final question leads to the ending screen.
+
+Questions pause hazards, moving bridges, the challenge timer, and jump-boost duration. There is no answer deadline. An incorrect answer gives a short explanation and another try, without taking hearts or tokens. A correct answer gives one shield, only once—even after reloading or visiting Settings.
+
+## Enter the stores
+
+Approach the adobe **Sunstone Supply** building in any level. Click **Enter store** or press **E**. The roadrunner enters a separate, walkable room with shelves, a counter, a tortoise shopkeeper, and an exit door.
+
+- Walk to the counter and press **E**, or click **Browse upgrades**.
+- A **shield costs 6 tokens** and absorbs one hazard hit.
+- **Spring step costs 4 tokens** and gives 25 seconds of higher jumps during outdoor play. Time does not expire inside the store, menus, or questions.
+- Compare effects before purchasing, or save tokens. Six tokens are available before the first store in a fresh game, so the player cannot initially buy both upgrades.
+- **Back to the store** closes the inventory. Walk to the door and press E, or click **Leave store**, to return outside.
+- The room supports keyboard and touch movement, pause, Settings, and full screen. Store visits are optional; neither upgrade is required to finish.
+
+## Comfort, difficulty, and progress
+
+Relaxed mode is the default: no countdown and no game-over screen. It includes safety paths under the moving bridges. Challenge mode shows elapsed active outdoor play time and opens the bridge gaps. Choose the mode before starting a level; bridge safety paths use the mode selected at level entry. All bridge gaps are short enough for a normal jump, and falling returns to the saved checkpoint.
+
+Settings also include gentle/cruising/quick running speed, loop traversal on/off, reduced motion, separate sound/music volumes and mute, narration speed, and alternative movement keys. Music starts muted. Reduced motion removes camera easing and decorative hazard rotation; essential loop orientation remains unless loop traversal is turned off. No flashing effects or camera shakes are used.
+
+Start with three hearts. Hazards cost one heart or one shield and give brief, steady translucent invulnerability. Running out of hearts restores three at the checkpoint, preserving tokens and answers. Each new level also starts with three hearts. Coins, purchased upgrades, and remaining boost time carry forward.
+
+**Listen / Replay / Stop** on each question use optional browser narration of the entire question and every answer. Text remains visible without a voice. Browser/OS voice availability varies; try narration on the student's actual device. This application does not send question text or personal information to an external API; browser-provided voices follow browser/OS settings.
+
+Settings and campaign progress save locally in the browser. Reloading at a pending question restores that checkpoint; a saved correct answer does not unlock the next level until Continue is selected. The next-level card is saved too. New Game resets campaign progress but keeps comfort settings. Old continuous-trail saves start the new three-level campaign while preserving earned currency, upgrades, hearts, and comfort settings. The optional ending reflection is not saved.
+
+No accounts, database, analytics, external fonts, or external APIs are needed. Clearing browser data or changing browser/device can remove the local save.
+
+## Preview and develop
+
+Install Node.js 22.12+ (Node 24 recommended). From this repository folder:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the address Vite prints in a browser. To check the published version locally:
+Open the address Vite prints. In the cloud workspace, use `npm ci --cache /tmp/rr-npm-cache` if the default cache is not writable. Use the existing checkout; no separate worktree is needed.
 
 ```sh
 npm run build
 npm run preview
 ```
 
-In this cloud workspace, use `npm ci --cache /tmp/rr-npm-cache` if the default npm cache is not writable. The game uses no accounts, backend, remote fonts, analytics, or external APIs. All art and sound ship locally or are generated in the browser.
+The editable development entry is `app/index.html`, with application source in `src/`. The root `index.html` is a generated self-contained release for branch-based GitHub Pages; edit the source files, not that generated bundle.
 
-## Playing and adjusting comfort
+## Edit questions and difficulty
 
-- **Full screen:** click **Play in full screen** on the title menu or **Full screen** in the game toolbar. Press **F** to toggle it and **Esc** to exit. The game expands to fit the available screen while keeping touch controls, settings, and questions visible. If the browser blocks native fullscreen, the same button fills the browser window instead.
+Edit `src/questions.ts`: `prompt`, `answers`, `correct` (an answer index starting at **0**), and `explanation`. Keep three IDs: `0`, `1`, `2`, one for each level. Narration automatically includes every edited answer. Keep wording concrete; name the next-best alternative explicitly for opportunity cost. Scarcity means limited resources compared with wants and needs, not simply lack of money.
 
-- **Move:** arrow keys or A / D. **Jump:** Space, W, or Up. Large labeled touch buttons are below the game.
-- **Loop Trail v2:** six large surface-running loops, faster acceleration, coasting momentum, and active braking. Keep holding your direction to run around the walls and upside down. Press the opposite direction to brake, or jump off the track. A forgiving speed assist keeps the loop approachable at gentle speed. The camera stays upright. Turn off **Run the loop tracks** in Settings to use the ground route instead.
-- Practice in the safe starting area. Travel right; there are no mandatory precision jumps. Low platforms and extra high tokens are optional. The ravine has a safe bridge.
-- **Questions never open automatically.** The three optional rest stops are spread across a much longer trail (6,500, 14,200, and 21,800 pixels). Use the rest-stop button or E to practice; keep running to skip it. After the finish, **Practice the remaining questions** lets you do them together. Opening a question pauses movement, tumbleweeds, boost duration, and elapsed time. There is no answer deadline. Try again as often as needed; earned hearts and tokens are never taken for an answer. A correct answer gives one shield. Select **Continue** when ready.
-- At the adobe village after the first optional rest stop, use **Visit trail shop** (or E). Six tokens are available before the shop, so you cannot initially buy both upgrades. A shield costs 6 and absorbs one hit; a boost costs 4 and raises jumps for 25 seconds of active play. Save tokens or return with more later. Neither purchase is required.
-- Use **Settings** at any time: gentle/cruising/quick running, relaxed/challenge mode, separate music/effects volume, mute, reduced motion, narration speed, and alternative movement keys. Arrow keys and default jump keys remain available. Reduced motion disables decorative tumbleweed rotation and camera easing. There are no flashes or camera shakes in either mode.
-- **Escape** pauses/resumes; menus also work with Tab, Shift+Tab, Enter, and Space. Questions have keyboard-focusable answers, Listen/Replay/Stop, and no timer. Narration reads the full question and every answer. Browser/OS voice availability varies; all content remains visible without narration. No voice or other information is sent by this application; browser-provided voices follow the browser/OS settings.
-- Start with three hearts. A bump gives two seconds of protection (shown by a steady translucent character, never flashing). Shields absorb hits first. With zero hearts, all three return at the safe checkpoint, preserving tokens and answers. Falls return there too. Relaxed mode has no countdown and no game over. Challenge mode shows elapsed active play time, without ranking learning or imposing a deadline.
-- Settings and progress save in this browser on this device. **Continue adventure** returns to the latest economics checkpoint. Collected tokens, purchases, answers, help used, and power-ups persist. **New game / Restart** resets progress while keeping settings. Pausing and returning to the title also saves. The optional ending reflection is not saved. Private browsing, cleared site data, or changing device/browser may remove the save.
-
-## Edit questions
-
-Open [`src/questions.ts`](src/questions.ts). Each question has a `prompt`, `answers`, `correct` (answer index starting at **0**), and `explanation`. Keep the three IDs `0`, `1`, and `2`. Short concrete wording works best. For opportunity cost, name the next-best alternative explicitly. Scarcity means limited resources compared with wants and needs, not simply a lack of money. Listen/Replay automatically includes every answer after edits.
-
-The course has three optional question stops. Adding or removing stops also requires updating `checkpoints` in `src/course.ts`, safe checkpoint spacing in `src/main.ts`, and the ending review flow in `src/main.ts`. Finishing does not require answering questions.
-
-## Adjust difficulty
-
-Prefer the in-game Settings menu; changes are immediate on return and persist. For new default settings, edit `defaults` in `src/state.ts`. Existing saved settings take precedence. To change jump height/acceleration, edit `src/player.ts`; obstacle locations and level geometry are in `src/level.ts`. Keep the first 850 pixels safe, question approaches easy, and shop upgrades optional. Physics, hazards, and progress are separate from question content and HTML menus.
+Level boundaries, store positions, midpoint checkpoints, loops, gaps, and hazard types are in `src/course.ts`. Scenery and fixed collision geometry are in `src/level.ts`; moving hazards, bridges, gate enforcement, recovery, and stage transitions are in `src/game.ts`. Movement tuning is in `src/player.ts`, and loop surface movement is in `src/loops.ts`. Change default comfort settings in `src/state.ts`; existing saved settings take precedence.
 
 ## Test
 
 ```sh
 npm run build
-# In this cloud environment, Chromium is already at /usr/bin/chromium:
 npm test
-# Else install Playwright's browser, then use it:
+```
+
+This cloud environment uses Chromium at `/usr/bin/chromium`. Else install Playwright's browser and use it:
+
+```sh
 npx playwright install chromium
 PLAYWRIGHT_USE_BUNDLED=1 npm test
 ```
 
-On Windows PowerShell, use `$env:PLAYWRIGHT_USE_BUNDLED="1"; npm test`. Alternatively set `CHROMIUM_PATH` to an installed Chromium executable. CI installs Playwright Chromium with system dependencies.
+On PowerShell: `$env:PLAYWRIGHT_USE_BUNDLED="1"; npm test`. `CHROMIUM_PATH` can select another installed Chromium executable. CI installs the bundled browser with system dependencies.
 
-Playwright runs the real game at desktop (1440 × 1000) and Chromebook (1366 × 768) sizes. It checks keyboard/touch movement, jumping, platforms, collecting and spending, both working upgrades, all question gates, timers/hazards paused, retries, duplicate reward protection, hearts/invulnerability, falls, saves/reloading, settings/restart, menus, and ending. Targeted cases use opt-in `?test=1` diagnostics to place the player near interactions and exercise specific state transitions. A separate full-trail test uses ordinary movement at gentle speed with no teleportation, completes all six loops without question interruptions, and then practices all three questions after the finish. Speech tests verify complete utterances and controls with a browser speech spy; they cannot verify the sound/quality of the installed voice. Try narration on the student's actual device.
+Playwright tests desktop (1440 × 1000) and Chromebook (1366 × 768) viewports. Coverage includes the actual store room/counter/exit, purchases and effects, all mandatory questions and transition locks, narration/retries/rewards, paused hazards/timers/bridges, saves and reloads at an answered checkpoint, old-save migration, hearts/recovery, motion settings, loops, gust timing, moving-platform carry, challenge-gap jumps, full-screen/fallback controls, and normal input.
 
-## Current GitHub Pages site
+The full-campaign test uses ordinary gentle-speed movement and jumps through all three levels and six loops, with no teleportation. Focused interaction tests use opt-in `?test=1` diagnostics to place the player near a target; these are absent from ordinary play. Speech tests inspect complete utterances, not audible voice quality. Physical touch hardware and actual Chromebook performance require a device check. See `VALIDATION.md` for recorded outcomes.
 
-The repository root `index.html` is a complete, self-contained game for the existing branch-based Pages site. `.nojekyll` ensures it is served directly. The development entry is `app/index.html`; keep editing TypeScript in `src/`, not the generated root HTML.
+## Publish with GitHub Pages
 
-To refresh the branch-based site after source changes:
+The **Publish Roadrunner Rush** workflow builds and deploys on pushes to `main` when repository **Settings → Pages → Source** is **GitHub Actions**. It can also be run manually from **Actions → Publish Roadrunner Rush → Run workflow**. Wait for the deployment's green checkmark before checking the public site.
+
+The existing branch-based site is supported too. Regenerate its self-contained HTML after source edits:
 
 ```sh
 npm run build:single
 cp dist/Roadrunner-Rush.html index.html
 ```
 
-Commit and push `index.html` along with the source changes. The generated single-file game can also be downloaded and opened in a personal browser; this managed cloud browser blocks file-URL navigation, so validation here uses an HTTP-served copy.
+Commit/push the generated root `index.html` with the source changes. `.nojekyll` makes it directly servable. The single-file output can also be downloaded and opened in a personal browser; this managed browser blocks file-URL navigation, so artifact checks here use an HTTP-served copy.
 
-## Optional: publish with GitHub Actions
+## Source and original art
 
-1. Commit and push this project to GitHub.
-2. In repository **Settings → Pages → Source**, select **GitHub Actions**.
-3. In **Actions**, select **Publish Roadrunner Rush**, then **Run workflow** on your chosen branch.
-4. When it finishes, open the Pages address shown by the deployment.
+`src/store.ts` draws and runs the walkable store interior. `src/main.ts` and `src/style.css` provide accessible HTML menus and the purchasing interface. `src/economics.ts` holds answer/reward rules; `src/audio.ts` generates quiet original cues and an eight-note ambient motif; `src/fullscreen.ts` manages native/full-window expansion.
 
-The included workflow publishes on pushes to `main` once Pages Source is set to GitHub Actions; it can also be run manually. Vite's relative base supports a project site under `/SonicEconomics/`. No keys or database are needed. The `dist` folder can also be hosted on any static web host; do not open `index.html` directly from the filesystem.
-
-## Source map and original assets
-
-- `src/player.ts`: momentum, acceleration/braking, jumping, and remapped keys.
-- `src/loops.ts`: circular surface movement, inversion, assisted momentum, braking, and jumping off loops.
-- `src/course.ts`: shared loop, rest-stop, shop, and finish positions.
-- `src/level.ts`: safe trail geometry, locally drawn scenery, tokens, original three-frame roadrunner, and tumbleweed textures.
-- `src/game.ts`: Phaser lifecycle, collisions, hearts, checkpoints, collection, paused simulation.
-- `src/questions.ts`: teacher-editable economics content.
-- `src/economics.ts`: answer evaluation, retry bookkeeping, and one-time rewards.
-- `src/main.ts` / `src/style.css`: accessible HTML overlays, settings, shop, narration controls, ending, keyboard focus management, responsive presentation.
-- `src/audio.ts`: original quiet synthesized cues and a simple original eight-note ambient motif; music starts muted.
-- `src/state.ts`: local-only settings and progress.
-- `public/roadrunner.svg` / `public/favicon.svg`: original vector artwork created for this game.
-
-The New Mexico scenery uses prickly pear and flowering yucca, with mesas, mountains, and adobe buildings; there are no saguaros.
-
-All artwork is original procedural/vector art, intentionally simple for this first release; no external or temporary licensed assets are required. The title illustration and animated game sprite depict the same turquoise bird with a swept crest, long striped tail, ivory throat, and amber beak. No Sonic characters, branding, assets, music, or levels are used.
+All art is original local procedural/vector artwork, including the animated turquoise roadrunner, tortoise shopkeeper, adobe stores, and desert tracks. New Mexico vegetation uses prickly pear and flowering yucca, with no saguaros. No Sonic characters, branding, assets, music, or levels are used. No temporary licensed art or remote asset services are required.
