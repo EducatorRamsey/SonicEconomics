@@ -1,0 +1,26 @@
+{
+  "name": "roadrunner-rush",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "playwright test",
+    "format": "prettier --write src tests *.ts *.json index.html README.md",
+    "build:single": "npm run build && node scripts/package-standalone.mjs"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
