@@ -15,7 +15,7 @@ export const levels = [
   },
   {
     id: 1,
-    name: "Austin, Texas",
+    name: "Houston, Texas",
     start: 23180,
     left: 23000,
     end: 43640,
@@ -23,7 +23,7 @@ export const levels = [
     shop: 31200,
     safe: 36000,
     description:
-      "Cross construction steps and moving barriers before shopping. Explore elevated city routes on the way to the fictional Austin Launch Works.",
+      "Cross construction steps and moving barriers before shopping. Explore elevated city routes on the way to the fictional Houston Launch Works.",
   },
   {
     id: 2,

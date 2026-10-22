@@ -1,7 +1,7 @@
 import { progress } from "./state";
 export const stores = [
   "Sunstone Supply",
-  "Austin Launch Outfitters",
+  "Houston Launch Outfitters",
   "Tranquility Trading Post",
 ];
 export const inventories = [

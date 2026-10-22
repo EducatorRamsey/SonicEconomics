@@ -1,10 +1,10 @@
-# Roadrunner Rush · Roadrunner Rush v6.1
+# Roadrunner Rush · Roadrunner Rush v6.2
 
 An original Earth-to-Moon platformer built with Phaser 3, TypeScript, and Vite. Run eighteen upside-down loops, visit enterable stores, and practice scarcity, opportunity cost, and trade-offs. This repository is separate from Butterfly Effect.
 
 ## Play
 
-On the published site, choose **New game** for a fresh three-level adventure or **Continue adventure** to resume your saved checkpoint. The footer shows **Roadrunner Rush v6.1**.
+On the published site, choose **New game** for a fresh three-level adventure or **Continue adventure** to resume your saved checkpoint. The footer shows **Roadrunner Rush v6.2**.
 
 - **Move:** arrows or A / D. **Jump:** Space, W, or Up. Labeled touch buttons work too.
 - **Full screen:** the toolbar or title-menu button; **F** toggles and **Esc** exits. If native fullscreen is unavailable, the game fills the browser window. All menus, store controls, and questions remain inside the full-screen game.
@@ -13,13 +13,13 @@ On the published site, choose **New game** for a fresh three-level adventure or 
 
 ## Three levels
 
-Playable distances are exactly three times the previous campaign: Albuquerque 21,060 units, Austin 20,460, Moon 19,860. Extra loops, hazard encounters and raised routes fill the extension; the Moon has four moving-platform gaps.
+Playable distances are exactly three times the previous campaign: Albuquerque 21,060 units, Houston 20,460, Moon 19,860. Extra loops, hazard encounters and raised routes fill the extension; the Moon has four moving-platform gaps.
 
-| Level             | Main obstacles                                      | What changes                                                                                           |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1 · Albuquerque   | Tumbleweeds                                         | Sandia Mountains, adobe houses, balloons, Rio Grande bridge, coins and trail supplies.                 |
-| 2 · Austin, Texas | Moving construction barriers and stepped ledges     | Skyline, lake and oaks, gold coins, launch equipment and a fictional spaceport.                        |
-| 3 · The Moon      | Timed energy gates, meteorites and moving platforms | Starfield, Earth overhead, craters, lander and habitat, gold coins, lower gravity and lunar equipment. |
+| Level              | Main obstacles                                      | What changes                                                                                           |
+| ------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1 · Albuquerque    | Tumbleweeds                                         | Sandia Mountains, adobe houses, balloons, Rio Grande bridge, coins and trail supplies.                 |
+| 2 · Houston, Texas | Moving construction barriers and stepped ledges     | Skyline, lake and oaks, gold coins, launch equipment and a fictional spaceport.                        |
+| 3 · The Moon       | Timed energy gates, meteorites and moving platforms | Starfield, Earth overhead, craters, lander and habitat, gold coins, lower gravity and lunar equipment. |
 
 Each level has six loops, a store, a midpoint recovery checkpoint, and a **mandatory three-question challenge at the finish**. All three questions must be answered before proceeding. A perfect 3/3 earns a wearable prize. After a lower score, choose **Try again for the prize** for a fresh set, or **Continue without the prize**. Quiz retries do not cost money or hearts. Questions never interrupt the middle of a stage.
 
@@ -30,22 +30,22 @@ The prize is visible before answering and on the result screen. Earned prizes eq
 | Stage       | Wearable prize        | In-game benefit                                                                                       |
 | ----------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
 | Albuquerque | Red Desert dash shoes | 10% faster running on straight paths, during this adventure. Assisted loops retain their speed limit. |
-| Austin      | Golden Launch cap     | One shield on first award and at each subsequent stage start in this adventure.                       |
+| Houston     | Golden Launch cap     | One shield on first award and at each subsequent stage start in this adventure.                       |
 | Moon        | Moon explorer helmet  | Four jet charges when earned; helmet visibly appears on the Moon.                                     |
 
 The title's **Your prizes** button previews the collection. Perfect retries of an already-owned prize do not award additional charges. Ending scores show each stage’s best attempt; students can replay for missing prizes.
 
-After Albuquerque, the route travels to Austin. The launch facility there is fictional (NASA’s Johnson Space Center is in Houston). After Austin’s three-question challenge, board a short rocket flight to the Moon. **Skip flight · Land on the Moon** arrives immediately. Reduced motion uses a static flight view. Reloading during travel safely returns to the departure card. Every destination restarts the gameplay scene with its own scenery, active geometry, pickups, hazards, store and camera bounds.
+After Albuquerque, the route travels to Houston. Houston is home to NASA’s Johnson Space Center and Mission Control. The game’s rocket launch site is fictional. After Houston’s three-question challenge, board a short rocket flight to the Moon. **Skip flight · Land on the Moon** arrives immediately. Reduced motion uses a static flight view. Reloading during travel safely returns to the departure card. Every destination restarts the gameplay scene with its own scenery, active geometry, pickups, hazards, store and camera bounds.
 
 ## Enter the stores
 
-Stores now follow an introductory obstacle section: Albuquerque’s first tumbleweed and river bridge; Austin’s construction steps, first barrier and loop; the Moon’s introductory energy gates, loops and first meteorite. Each store now sits about 8,000 units into its stage, after several hazards and two loops. It has a safe approach, with most of the stage still ahead to try the equipment.
+Stores now follow an introductory obstacle section: Albuquerque’s first tumbleweed and river bridge; Houston’s construction steps, first barrier and loop; the Moon’s introductory energy gates, loops and first meteorite. Each store now sits about 8,000 units into its stage, after several hazards and two loops. It has a safe approach, with most of the stage still ahead to try the equipment.
 
-Approach the destination’s store: Albuquerque’s **Sunstone Supply**, **Austin Launch Outfitters**, or the Moon’s **Tranquility Trading Post**. Click **Enter store** or press **E**. The roadrunner enters a separate, walkable room with shelves, a counter, a tortoise shopkeeper, and an exit door.
+Approach the destination’s store: Albuquerque’s **Sunstone Supply**, **Houston Launch Outfitters**, or the Moon’s **Tranquility Trading Post**. Click **Enter store** or press **E**. The roadrunner enters a separate, walkable room with shelves, a counter, a tortoise shopkeeper, and an exit door.
 
 - Walk to the counter and press **E**, or click **Browse upgrades**.
 - Albuquerque: **Trail shield (26)** absorbs three hits; **Spring step (25)** raises jumps for the rest of the stage, making high-route access easier.
-- Austin: **Coin magnet (38)** collects within 340 pixels, including loop-crown coins from below; **Speed boots (37)** add 25% running speed. Both last until the next destination; loop speed stays assisted.
+- Houston: **Coin magnet (38)** collects within 340 pixels, including loop-crown coins from below; **Speed boots (37)** add 25% running speed. Both last until the next destination; loop speed stays assisted.
 - Moon: **Meteor armor (50)** adds five shields; **Lunar jump jets (49)** add eight midair boosts. Release Jump, then press again in the air to use one.
 - Each item has **one in stock per journey**. Sold-out status persists through reloads. You can save up to buy both later, but doing so means foregoing earlier equipment.
 - There are exactly **50 gold coins per stage**: two compact seven-coin introductory trails and a six-coin crown tracing the top of each of the six loops. Twenty-six coins are available before shopping. The entire campaign contains 150, while buying every item costs 225. Coins never respawn after recovery or reload.
@@ -128,4 +128,4 @@ Commit/push the generated root `index.html` with the source changes. `.nojekyll`
 
 `src/store.ts` draws and runs the walkable store interior. `src/main.ts` and `src/style.css` provide accessible HTML menus and the purchasing interface. `src/questions.ts` supplies quiz banks and random attempts, `src/prizes.ts` supplies prize art/descriptions, and `src/state.ts` persists awards; `src/audio.ts` generates quiet original cues and an eight-note ambient motif; `src/fullscreen.ts` manages native/full-window expansion.
 
-All art is original local procedural/vector artwork, including the animated turquoise roadrunner, tortoise shopkeeper, adobe stores, and desert tracks. Albuquerque vegetation uses prickly pear and yucca, with no saguaros; Austin has oaks and the Moon has no vegetation or atmospheric wind. No Sonic characters, branding, assets, music, or levels are used. No temporary licensed art or remote asset services are required.
+All art is original local procedural/vector artwork, including the animated turquoise roadrunner, tortoise shopkeeper, adobe stores, and desert tracks. Albuquerque vegetation uses prickly pear and yucca, with no saguaros; Houston has oaks and the Moon has no vegetation or atmospheric wind. No Sonic characters, branding, assets, music, or levels are used. No temporary licensed art or remote asset services are required.

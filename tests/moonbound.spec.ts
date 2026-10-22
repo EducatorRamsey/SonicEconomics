@@ -36,7 +36,7 @@ test("destinations replace scenery, collectibles, gravity and store equipment; r
   await advanceTo(page, 1);
   expect((await world()).textures).toEqual(["token"]);
   expect((await world()).hazards).toEqual(Array(8).fill("barrier"));
-  expect((await world()).labels.join(" ")).toContain("AUSTIN LAUNCH WORKS");
+  expect((await world()).labels.join(" ")).toContain("HOUSTON LAUNCH WORKS");
   expect((await world()).labels.join(" ")).not.toContain("ALBUQUERQUE");
   await page.evaluate(() => {
     (window as any).rr.progress.tokens = 100;
@@ -77,7 +77,7 @@ test("destinations replace scenery, collectibles, gravity and store equipment; r
   expect((await world()).textures).toEqual(["token"]);
   expect((await world()).hazards).toContain("energy");
   expect((await world()).labels.join(" ")).toContain("THE MOON");
-  expect((await world()).labels.join(" ")).not.toContain("AUSTIN");
+  expect((await world()).labels.join(" ")).not.toContain("HOUSTON");
   // Fund the effects-only fixture; the scarcity budget is covered separately.
   await page.evaluate(() => {
     (window as any).rr.progress.tokens = 100;

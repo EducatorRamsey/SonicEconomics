@@ -75,7 +75,7 @@ const bank: [string, string, string[], number, string][][] = [
   ],
   [
     [
-      "An afternoon in Austin",
+      "An afternoon in Houston",
       "You choose the skate park instead of helping a friend. Helping your friend was your next-best choice. What is your opportunity cost?",
       [
         "Every activity in the city.",

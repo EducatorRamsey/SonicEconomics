@@ -72,7 +72,7 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
     g.fillStyle(0x4f98af);
     g.fillRect(3480, 455, 210, 45);
   } else if (stage === 1) {
-    // Austin skyline, lake, oak trees, construction and a fictional launch site.
+    // Houston skyline, lake, oak trees, construction and a fictional launch site.
     for (let x = left; x < level.right; x += 180) {
       const height = 100 + (((x - left) / 180) % 5) * 34;
       g.fillStyle(0x7097ad);
@@ -225,7 +225,7 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
     stage === 2
       ? "LOW GRAVITY · Longer jumps"
       : stage === 1
-        ? "AUSTIN · Jump construction steps"
+        ? "HOUSTON · Jump construction steps"
         : "ALBUQUERQUE · Move & jump",
   );
   sign(level.shop - 500, "STORE AHEAD · Enter with E");
@@ -252,10 +252,10 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
   sign(
     level.end - 180,
     stage === 1
-      ? "AUSTIN LAUNCH WORKS · CHECKPOINT"
+      ? "HOUSTON LAUNCH WORKS · CHECKPOINT"
       : stage === 2
         ? "MOON BASE · ECONOMICS CHECKPOINT"
-        : "BUS TO AUSTIN · ECONOMICS CHECKPOINT",
+        : "BUS TO HOUSTON · ECONOMICS CHECKPOINT",
   );
   g.fillStyle(trim);
   g.fillRoundedRect(level.end - 22, 405, 44, 89, 14);
@@ -273,7 +273,7 @@ export function drawLevel(scene: Phaser.Scene, relaxed = true) {
       stage === 0
         ? "ALBUQUERQUE · NEW MEXICO"
         : stage === 1
-          ? "AUSTIN · TEXAS"
+          ? "HOUSTON · TEXAS"
           : "TRANQUILITY TRAIL · THE MOON",
       { fontSize: "19px", color: ink, fontStyle: "bold" },
     )

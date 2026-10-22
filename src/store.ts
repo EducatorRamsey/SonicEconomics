@@ -103,7 +103,7 @@ export class TradingPost extends Phaser.Scene {
         118,
         [
           "Albuquerque · Trail essentials",
-          "Austin · Prepare for launch",
+          "Houston · Prepare for launch",
           "Moon habitat · Gear for low gravity",
         ][stage],
         {
