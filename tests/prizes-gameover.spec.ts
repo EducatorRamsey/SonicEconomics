@@ -148,8 +148,8 @@ test("three lost hearts produce X eyes, a fall-over animation, descending sound 
     .poll(() =>
       page.evaluate(() => (window as any).rr.scene.player.body.maxVelocity.x),
     )
-    .toBe(660);
-  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([0]);
+    .toBe(600);
+  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([]);
   expect(
     await page.evaluate(() => (window as any).rr.scene.player.texture.key),
   ).not.toBe("bird-dead");
@@ -186,4 +186,45 @@ test("title uses readable type and contains no update notes; neutral messages ar
   await page.locator("#home").click();
   await expect(page.locator("#notice")).toBeEmpty();
   await expect(page.locator("#notice")).toBeHidden();
+});
+
+test("a new adventure clears saved shoes, cap, helmet and all their bonuses", async ({
+  page,
+}) => {
+  await start(page);
+  await page.evaluate(() => {
+    const r = (window as any).rr;
+    r.wardrobe.push(0, 1, 2);
+    r.progress.shield = 3;
+    r.progress.jets = 4;
+    localStorage.setItem("rr-prizes", JSON.stringify(r.wardrobe));
+    localStorage.setItem("rr-progress", JSON.stringify(r.progress));
+  });
+  await page.reload();
+  await page.locator("#continue-save").click();
+  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([
+    0, 1, 2,
+  ]);
+  await page.locator("#pause").click();
+  await page.locator("#restart").click();
+  await page.locator("#confirm-new").click();
+  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([]);
+  expect((await state(page)).shield).toBe(0);
+  expect((await state(page)).jets).toBe(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as any).rr.scene.player.body.maxVelocity.x),
+    )
+    .toBe(600);
+  expect(
+    await page.evaluate(
+      () => (window as any).rr.scene.player.outfit.commandBuffer.length,
+    ),
+  ).toBe(0);
+  await page.reload();
+  await page.locator("#continue-save").click();
+  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([]);
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem("rr-prizes")!)),
+  ).toEqual([]);
 });

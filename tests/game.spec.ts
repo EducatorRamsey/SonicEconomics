@@ -143,7 +143,7 @@ test("save a partial quiz, restore its answered question, and keep settings afte
   await page.locator("#confirm-new").click();
   expect((await state(page)).level).toBe(0);
   expect((await state(page)).tokens).toBe(0);
-  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toContain(0);
+  expect(await page.evaluate(() => (window as any).rr.wardrobe)).toEqual([]);
   expect(await page.evaluate(() => (window as any).rr.settings.reduced)).toBe(
     true,
   );

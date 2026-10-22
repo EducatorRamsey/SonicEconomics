@@ -24,7 +24,7 @@ app.innerHTML = `<header class="site-header"><a class="brand" href="./" aria-lab
 <main><div class="page-intro"><div><span class="eyebrow">FROM THE SOUTHWEST TO SPACE</span><h1>Find your own way.</h1><p>A roadrunner, an open trail, and a few choices along the way.</p></div><span class="mode-pill" id="mode-pill">◉ Relaxed adventure</span></div>
 <section class="game-shell" aria-label="Roadrunner Rush game"><div class="game-toolbar"><div class="trail-label"><span class="live-dot"></span> ROAD TO THE MOON <span class="divider">/</span> <span id="area">Practice trail</span></div><div class="stats"><span id="hearts" aria-label="3 hearts">♥ ♥ ♥</span><span class="token-stat">◈ <b id="tokens">0</b></span><span id="power"></span><span id="timer" hidden></span><button id="fullscreen" class="toolbar-btn" aria-pressed="false" title="Full screen (F)">Full screen</button><button id="game-settings" class="toolbar-btn">Settings</button><button id="pause" class="toolbar-btn" aria-label="Pause game"><span aria-hidden="true" class="pause-icon"></span><span>Pause</span></button></div></div><div id="stage"><div id="canvas" role="img" aria-label="Side-scrolling Earth-to-Moon platformer. Use arrow keys or A and D to move, Space to jump."></div><div class="trail-progress" aria-label="Economics checkpoints"><span id="gate-0">01 <i>Scarcity</i></span><span id="gate-1">02 <i>Opportunity cost</i></span><span id="gate-2">03 <i>Trade-offs</i></span></div><div id="notice" role="status" aria-live="polite"></div><button id="rest-open" class="primary rest-prompt" hidden>Optional question · E</button><button id="shop-open" class="primary shop-prompt" hidden>Enter store · E</button><div id="store-controls" role="region" aria-label="Store controls" hidden><span>SUNSTONE SUPPLY · Walk with ← → · E at the counter or door</span><button id="store-browse" class="secondary">Browse upgrades</button><button id="store-exit" class="primary">Leave store</button></div><div id="overlay"></div></div>
 <div class="control-bar"><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd><span>or A / D to move</span><kbd>SPACE</kbd><span>to jump</span></div><span class="comfort-note">Build momentum. Find your flow.</span><div class="touch-controls" aria-label="Touch controls"><button data-hold="left" aria-label="Move left">← Left</button><button data-hold="right" aria-label="Move right">Right →</button><button data-hold="jump" aria-label="Jump">↑ Jump</button></div></div></section>
-<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. A three-question prize challenge at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Roadrunner Rush v6 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
+<section class="below-game"><div><span class="mini-icon">✦</span><div><h2>Small choices. Big discoveries.</h2><p>Albuquerque, Austin, then the Moon. A three-question prize challenge at the end of each level.</p></div></div><div class="privacy-note"><span>⌂</span> Progress stays on this device.<br>No accounts. Just adventure.</div></section><p class="save-note" id="save-note">Roadrunner Rush v6.1 · Original art & sound · Play with keyboard, mouse, or touch</p></main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const scene = new Desert();
@@ -204,7 +204,7 @@ function confirmNew() {
   const back = screen;
   modal(
     "confirm",
-    `<span class="eyebrow">A FRESH TRAIL</span><h2 id="dialog-title">Start a new adventure?</h2><p>Start again in Albuquerque with three hearts and an empty wallet. Your prizes and settings stay.</p><button id="confirm-new" class="primary">Start new game</button><button id="cancel-new" class="secondary">Keep my adventure</button>`,
+    `<span class="eyebrow">A FRESH TRAIL</span><h2 id="dialog-title">Start a new adventure?</h2><p>Start again in Albuquerque with three hearts and an empty wallet. Prizes must be earned again. Your settings stay.</p><button id="confirm-new" class="primary">Start new game</button><button id="cancel-new" class="secondary">Keep my adventure</button>`,
   );
   button("confirm-new", begin);
   button("cancel-new", () =>
@@ -341,7 +341,7 @@ function quizResult() {
 function collection() {
   modal(
     "collection",
-    `<span class="eyebrow">YOUR PRIZES</span><h2 id="dialog-title">Dress for adventure.</h2><p>Win a stage’s three-question challenge to earn its prize. Your collection stays with you when you start again.</p>${prizes.map((p) => `${prizePreview(p.id, wardrobe.includes(p.id))}<p class="collection-status">${wardrobe.includes(p.id) ? "✓ Earned and equipped" : "Not earned yet"}</p>`).join("")}<button id="collection-back" class="primary">Back to title</button>`,
+    `<span class="eyebrow">YOUR PRIZES</span><h2 id="dialog-title">Dress for adventure.</h2><p>Win a stage’s three-question challenge to earn its prize. Prizes stay with you for this adventure. Start a new game to earn them again.</p>${prizes.map((p) => `${prizePreview(p.id, wardrobe.includes(p.id))}<p class="collection-status">${wardrobe.includes(p.id) ? "✓ Earned and equipped" : "Not earned yet"}</p>`).join("")}<button id="collection-back" class="primary">Back to title</button>`,
     true,
   );
   button("collection-back", title);
@@ -358,7 +358,7 @@ function gameOver() {
 function gameOverDialog() {
   modal(
     "gameover",
-    `<span class="eyebrow">ALL THREE HEARTS LOST</span><h2 id="dialog-title">Game over</h2><p>You must start again in Albuquerque. Your earned prizes and settings stay with you.</p><button id="start-again" class="primary">Start again</button><button id="gameover-title" class="secondary">Back to title</button><button id="gameover-settings" class="text-btn">Settings</button>`,
+    `<span class="eyebrow">ALL THREE HEARTS LOST</span><h2 id="dialog-title">Game over</h2><p>You must start again in Albuquerque. You must earn your prizes again. Your settings stay with you.</p><button id="start-again" class="primary">Start again</button><button id="gameover-title" class="secondary">Back to title</button><button id="gameover-settings" class="text-btn">Settings</button>`,
   );
   button("start-again", begin);
   button("gameover-title", title);

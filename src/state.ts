@@ -62,7 +62,7 @@ const fresh = (): Progress => ({
   x: 180,
   tokens: 0,
   hearts: 3,
-  shield: wardrobe.includes(1) ? 1 : 0,
+  shield: 0,
   boost: 0,
   magnet: 0,
   boots: 0,
@@ -129,6 +129,7 @@ export function saveSettings() {
   }
 }
 export function newGame() {
+  wardrobe.length = 0;
   progress = fresh();
   save();
   return progress;

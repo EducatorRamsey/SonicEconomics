@@ -1,10 +1,10 @@
-# Roadrunner Rush · Roadrunner Rush v6
+# Roadrunner Rush · Roadrunner Rush v6.1
 
 An original Earth-to-Moon platformer built with Phaser 3, TypeScript, and Vite. Run eighteen upside-down loops, visit enterable stores, and practice scarcity, opportunity cost, and trade-offs. This repository is separate from Butterfly Effect.
 
 ## Play
 
-On the published site, choose **New game** for a fresh three-level adventure or **Continue adventure** to resume your saved checkpoint. The footer shows **Roadrunner Rush v6**.
+On the published site, choose **New game** for a fresh three-level adventure or **Continue adventure** to resume your saved checkpoint. The footer shows **Roadrunner Rush v6.1**.
 
 - **Move:** arrows or A / D. **Jump:** Space, W, or Up. Labeled touch buttons work too.
 - **Full screen:** the toolbar or title-menu button; **F** toggles and **Esc** exits. If native fullscreen is unavailable, the game fills the browser window. All menus, store controls, and questions remain inside the full-screen game.
@@ -25,13 +25,13 @@ Each level has six loops, a store, a midpoint recovery checkpoint, and a **manda
 
 There are **six questions per stage (eighteen total)**. Each attempt randomly chooses three distinct questions and shuffles the answer order. A retry uses the other three questions from that stage, in random order, so it never repeats the immediately preceding set. Question choices, selections, current page and best score save locally; reloading or visiting Settings cannot repair a submitted answer or duplicate a reward. Physics, hazards, platforms and the challenge clock stay paused throughout the quiz.
 
-The prize is visible before answering and on the result screen. Earned prizes equip automatically and **persist across game over and New Game**:
+The prize is visible before answering and on the result screen. Earned prizes equip automatically and **last for the current adventure, including saved-game reloads**. New Game or restarting after game over clears all prizes and their bonuses:
 
-| Stage       | Wearable prize        | In-game benefit                                                                                         |
-| ----------- | --------------------- | ------------------------------------------------------------------------------------------------------- |
-| Albuquerque | Red Desert dash shoes | 10% faster running on straight paths, in this and future runs. Assisted loops retain their speed limit. |
-| Austin      | Golden Launch cap     | One shield on first award and at each subsequent stage/game start.                                      |
-| Moon        | Moon explorer helmet  | Four jet charges on first award and on future Moon arrivals; helmet visibly appears on the Moon.        |
+| Stage       | Wearable prize        | In-game benefit                                                                                       |
+| ----------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Albuquerque | Red Desert dash shoes | 10% faster running on straight paths, during this adventure. Assisted loops retain their speed limit. |
+| Austin      | Golden Launch cap     | One shield on first award and at each subsequent stage start in this adventure.                       |
+| Moon        | Moon explorer helmet  | Four jet charges when earned; helmet visibly appears on the Moon.                                     |
 
 The title's **Your prizes** button previews the collection. Perfect retries of an already-owned prize do not award additional charges. Ending scores show each stage’s best attempt; students can replay for missing prizes.
 
@@ -59,11 +59,11 @@ Relaxed mode is the default: no countdown. Losing all three hearts ends the game
 
 Settings also include gentle/cruising/quick running speed, loop traversal on/off, reduced motion, separate sound/music volumes and mute, narration speed, and alternative movement keys. Music starts muted. Reduced motion removes camera easing and decorative hazard rotation; essential loop orientation remains unless loop traversal is turned off. No flashing effects or camera shakes are used.
 
-Start with three hearts. Hazards cost one heart or one shield and give brief, steady translucent invulnerability. Losing the last heart plays an original descending sound, shows the bird falling sideways with X eyes, and displays **Game over**. You must start the campaign again in Albuquerque; reloading or Settings cannot resume the dead run. Restart clears run coins, stock, quiz answers and checkpoints, but keeps the earned prize collection and settings. Reduced motion uses the final fallen pose immediately; sound respects mute. Each new level also starts with three hearts. Currency, unused shields and jet fuel carry forward; stage movement equipment ends on departure.
+Start with three hearts. Hazards cost one heart or one shield and give brief, steady translucent invulnerability. Losing the last heart plays an original descending sound, shows the bird falling sideways with X eyes, and displays **Game over**. You must start the campaign again in Albuquerque; reloading or Settings cannot resume the dead run. Restart clears run coins, stock, quiz answers and checkpoints, and earned prizes, but keeps settings. Reduced motion uses the final fallen pose immediately; sound respects mute. Each new level also starts with three hearts. Currency, unused shields and jet fuel carry forward; stage movement equipment ends on departure.
 
 **Listen / Replay / Stop** on each question use optional browser narration of the entire question and every answer. Text remains visible without a voice. Browser/OS voice availability varies; try narration on the student's actual device. This application does not send question text or personal information to an external API; browser-provided voices follow browser/OS settings.
 
-Settings and campaign progress save locally in the browser. Reloading at a pending question restores that checkpoint; the saved three-question attempt stays exactly where it was left until Next/Continue is selected. The next-level card is saved too. New Game resets campaign progress but keeps comfort settings and the prize collection. Earlier campaign saves are backed up locally under `rr-previous-campaign`. The revised coin layout, quiz banks and game-over rules start a fresh v6 campaign in Albuquerque; old runs are backed up. Comfort settings remain. The optional ending reflection is not saved.
+Settings and campaign progress save locally in the browser. Reloading at a pending question restores that checkpoint; the saved three-question attempt stays exactly where it was left until Next/Continue is selected. The next-level card is saved too. New Game resets campaign progress but keeps comfort settings; prizes must be earned again. Earlier campaign saves are backed up locally under `rr-previous-campaign`. The revised coin layout, quiz banks and game-over rules start a fresh v6 campaign in Albuquerque; old runs are backed up. Comfort settings remain. The optional ending reflection is not saved.
 
 No accounts, database, analytics, external fonts, or external APIs are needed. Clearing browser data or changing browser/device can remove the local save.
 
